@@ -1,6 +1,8 @@
 <title>Točnost na terenu</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   :root {
     color-scheme: dark;
@@ -33,6 +35,7 @@
     -webkit-tap-highlight-color: transparent;
   }
   .wrap { max-width: 480px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 14px; }
+  .wrap > * { min-width: 0; }
 
   header { display: flex; align-items: flex-start; gap: 12px; }
   .mark {
@@ -53,9 +56,9 @@
   .reading { display: flex; align-items: flex-end; gap: 14px; margin-top: 12px; }
   .acc { font: 700 60px var(--fh); line-height: .88; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
   .acc-unit { font: 500 17px var(--fh); color: var(--ink-3); padding-bottom: 6px; }
-  .verdict { margin-left: auto; text-align: right; display: flex; flex-direction: column; gap: 4px; padding-bottom: 4px; }
+  .verdict { margin-left: auto; text-align: right; display: flex; flex-direction: column; gap: 4px; padding-bottom: 4px; min-width: 0; }
   .verdict b { font: 600 13px var(--fh); }
-  .verdict span { font: 400 11px var(--fb); color: var(--ink-3); }
+  .verdict span { font: 400 11px var(--fb); color: var(--ink-3); text-wrap: pretty; }
 
   .strip { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
   .pill {
@@ -66,8 +69,18 @@
   .pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-4); font-style: normal; }
 
   /* the drawing ----------------------------------------------------------- */
-  .plot-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-  canvas { display: block; width: 100%; height: auto; border-radius: 12px; margin-top: 12px; background: var(--bg-deep); }
+  .plot-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; row-gap: 8px; }
+  #map { height: 320px; border-radius: 12px; margin-top: 12px; background: var(--bg-deep); z-index: 0; }
+  .leaflet-container { font-family: var(--fb); background: var(--bg-deep); }
+  .leaflet-control-attribution { background: rgba(7,10,14,.78) !important; color: var(--ink-4) !important; font-size: 9px !important; }
+  .leaflet-control-attribution a { color: var(--ink-3) !important; }
+  .leaflet-control-scale-line { background: rgba(7,10,14,.7); border-color: var(--ink-2); color: var(--ink); font: 500 10px var(--fb); }
+  .leaflet-bar a { background: var(--surface-hi); color: var(--ink-2); border-color: var(--line); }
+  .leaflet-bar a:hover { background: var(--line); color: var(--ink); }
+  .segmented { display: flex; gap: 6px; }
+  .seg { height: 28px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--line-hi); background: transparent; color: var(--ink-3); font: 500 11px var(--fh); cursor: pointer; }
+  .seg[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg-deep); }
+  .truth-pin { display: block; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; border: 3px solid #FFB020; background: rgba(11,15,20,.6); box-sizing: border-box; }
   .legend { display: flex; gap: 16px; margin-top: 11px; flex-wrap: wrap; }
   .legend div { display: flex; align-items: center; gap: 7px; font: 400 11px var(--fb); color: var(--ink-3); }
   .swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
@@ -154,15 +167,19 @@
 
   <section class="card">
     <div class="plot-head">
-      <span class="label">krug pogreške u mjerilu</span>
-      <span class="label" id="scaleLabel" style="color:var(--ink-2)">primjer</span>
+      <span class="label">gdje si</span>
+      <span class="segmented">
+        <button class="seg" id="segSat" aria-pressed="true">Satelit</button>
+        <button class="seg" id="segMap" aria-pressed="false">Karta</button>
+      </span>
     </div>
-    <canvas id="plot" width="880" height="660" aria-label="Krug pogreške i rasipanje očitanja"></canvas>
+    <div id="map"></div>
     <div class="legend">
-      <div><span class="swatch" style="background:color-mix(in srgb,var(--accent) 28%,transparent);border:1px solid var(--accent)"></span>prijavljena točnost</div>
-      <div><span class="swatch" style="background:var(--good)"></span>pojedino očitanje</div>
-      <div><span class="swatch" style="background:var(--ink-2);border-radius:50%"></span>prosjek svih</div>
+      <div><span class="swatch" style="background:color-mix(in srgb,var(--accent) 28%,transparent);border:1px solid var(--accent)"></span>krug točnosti</div>
+      <div><span class="swatch" style="background:var(--good);border-radius:50%"></span>očitanja</div>
+      <div><span class="swatch" style="border:3px solid var(--accent);border-radius:50%;background:transparent"></span>prava točka</div>
     </div>
+    <p class="note" style="margin:11px 0 0;" id="truthHint">Dodirni na slici mjesto na kojem stvarno stojiš — neki ugao, rub asfalta, stup. Stranica onda mjeri koliko je telefon od toga promašio.</p>
   </section>
 
   <section class="card">
@@ -174,8 +191,10 @@
       <div class="stat"><dt>do ≤ 10 m</dt><dd id="s10">—</dd></div>
       <div class="stat"><dt>stvarno rasipanje</dt><dd id="sSpread">—</dd></div>
       <div class="stat"><dt>mrežnih očitanja</dt><dd id="sNet">—</dd></div>
+      <div class="stat"><dt>odmak od prave točke</dt><dd id="sOff">—</dd></div>
+      <div class="stat"><dt>najveći odmak</dt><dd id="sOffMax">—</dd></div>
     </dl>
-    <p class="note" style="margin:12px 0 0;">Rasipanje je najveća udaljenost pojedinog očitanja od prosjeka, dok stojiš na mjestu. To je pošteniji broj od prijavljene točnosti, jer ga telefon ne procjenjuje nego ga ti izmjeriš.</p>
+    <p class="note" style="margin:12px 0 0;">Rasipanje je najveća udaljenost pojedinog očitanja od prosjeka dok stojiš na mjestu — mjeri koliko je očitanje nemirno. Odmak je nešto drugo: udaljenost do točke koju si sama označila na slici, dakle koliko telefon stvarno griješi. Nemiran može biti i točan, i obrnuto.</p>
   </section>
 
   <section class="card">
@@ -259,69 +278,85 @@
   var fmt = function (m) { return m >= 100 ? Math.round(m) : m.toFixed(1); };
   var secs = function (ms) { return (ms / 1000).toFixed(1) + ' s'; };
 
-  /* ---------- drawing ---------------------------------------------------- */
-  var cv = $('plot'), ctx = cv.getContext('2d');
+  /* ---------- map -------------------------------------------------------- */
+  var map = null, layerSat = null, layerOsm = null;
+  var accCircle = null, fixDots = [], truth = null, truthMarker = null, truthRing = null;
+  var follow = true;
 
-  function draw() {
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var cssW = cv.clientWidth || 440, cssH = Math.round(cssW * 0.75);
-    if (cv.width !== Math.round(cssW * dpr)) { cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr); }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, cssW, cssH);
+  function initMap() {
+    if (map || typeof L === 'undefined') return;
+    map = L.map('map', { zoomControl: true, attributionControl: true }).setView([43.7350, 15.8952], 15);
+    layerSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19, attribution: 'Esri, Maxar, Earthstar Geographics'
+    }).addTo(map);
+    layerOsm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '&copy; OpenStreetMap'
+    });
+    L.control.scale({ metric: true, imperial: false, position: 'bottomleft' }).addTo(map);
+    map.on('dragstart', function () { follow = false; });
+    map.on('click', function (e) { setTruth(e.latlng.lat, e.latlng.lng); });
+  }
 
+  function setTruth(lat, lon) {
+    truth = { lat: lat, lon: lon };
+    if (truthMarker) map.removeLayer(truthMarker);
+    if (truthRing) map.removeLayer(truthRing);
+    truthMarker = L.marker([lat, lon], {
+      icon: L.divIcon({ className: '', html: '<span class="truth-pin"></span>', iconSize: [0, 0] })
+    }).addTo(map);
+    truthRing = L.polyline([], { color: '#FFB020', weight: 1.5, dashArray: '5 5' }).addTo(map);
+    $('truthHint').textContent = 'Prava točka je postavljena. Dodirni drugdje da je pomakneš.';
+    render();
+  }
+
+  function offset() {
     var last = fixes[fixes.length - 1];
-    var acc = last ? last.acc : 25;
-    var sp = spread() || 0;
-    var half = Math.max(acc * 1.35, sp * 1.5, 12);          // metres from centre to edge
-    var pxm = Math.min(cssW, cssH) / 2 / half;
+    if (!truth || !last) return null;
+    return metres(truth.lat, truth.lon, last.lat, last.lon);
+  }
 
-    var cx = cssW / 2, cy = cssH / 2;
+  function offsetMax() {
+    if (!truth || !fixes.length) return null;
+    return fixes.reduce(function (m, f) { return Math.max(m, metres(truth.lat, truth.lon, f.lat, f.lon)); }, 0);
+  }
 
-    // grid at a round step
-    var step = [1, 2, 5, 10, 20, 50, 100].find(function (s) { return half / s <= 5; }) || 200;
-    ctx.strokeStyle = '#131B23'; ctx.lineWidth = 1;
-    for (var g = step; g <= half * 1.5; g += step) {
-      ctx.beginPath(); ctx.arc(cx, cy, g * pxm, 0, Math.PI * 2); ctx.stroke();
-    }
-    ctx.beginPath();
-    ctx.moveTo(cx, 0); ctx.lineTo(cx, cssH); ctx.moveTo(0, cy); ctx.lineTo(cssW, cy);
-    ctx.stroke();
+  function drawMap() {
+    initMap();
+    if (!map) return;
+    var last = fixes[fixes.length - 1];
+    if (!last) return;
 
-    // reported-accuracy disc
-    ctx.beginPath(); ctx.arc(cx, cy, acc * pxm, 0, Math.PI * 2);
-    ctx.fillStyle = last ? 'rgba(255,176,32,.14)' : 'rgba(110,125,140,.10)';
-    ctx.fill();
-    ctx.strokeStyle = last ? '#FFB020' : '#3A4550';
-    ctx.lineWidth = 1.5; ctx.setLineDash(last ? [] : [5, 5]); ctx.stroke(); ctx.setLineDash([]);
-
-    // every fix, plotted against the running mean
-    if (fixes.length) {
-      var c = centroid();
-      fixes.forEach(function (f, i) {
-        var dx = rad(f.lon - c[1]) * Math.cos(rad(c[0])) * R * pxm;
-        var dy = -rad(f.lat - c[0]) * R * pxm;
-        var fresh = i >= fixes.length - 6;
-        ctx.beginPath(); ctx.arc(cx + dx, cy + dy, fresh ? 3.6 : 2.4, 0, Math.PI * 2);
-        ctx.fillStyle = fresh ? '#3FC98C' : 'rgba(63,201,140,.35)';
-        ctx.fill();
-      });
-      ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2);
-      ctx.fillStyle = '#0B0F14'; ctx.fill();
-      ctx.strokeStyle = '#A9B6C2'; ctx.lineWidth = 2; ctx.stroke();
+    if (!accCircle) {
+      accCircle = L.circle([last.lat, last.lon], { radius: last.acc, color: '#FFB020', weight: 1.5, fillColor: '#FFB020', fillOpacity: .14 }).addTo(map);
+    } else {
+      accCircle.setLatLng([last.lat, last.lon]).setRadius(last.acc);
     }
 
-    // scale bar
-    var barM = step, barPx = barM * pxm;
-    var bx = 14, by = cssH - 18;
-    ctx.strokeStyle = '#A9B6C2'; ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(bx, by - 5); ctx.lineTo(bx, by); ctx.lineTo(bx + barPx, by); ctx.lineTo(bx + barPx, by - 5);
-    ctx.stroke();
-    ctx.fillStyle = '#A9B6C2';
-    ctx.font = '500 11px "IBM Plex Sans", system-ui, sans-serif';
-    ctx.fillText(barM + ' m', bx, by - 9);
+    // one dot per fix; the newest is brighter
+    while (fixDots.length < fixes.length) {
+      var f = fixes[fixDots.length];
+      fixDots.push(L.circleMarker([f.lat, f.lon], {
+        radius: 3.5, color: '#3FC98C', weight: 1, fillColor: '#3FC98C', fillOpacity: .55
+      }).addTo(map));
+    }
+    fixDots.forEach(function (d, i) {
+      d.setStyle({ fillOpacity: i >= fixDots.length - 6 ? .95 : .3, radius: i === fixDots.length - 1 ? 5 : 3.5 });
+    });
 
-    $('scaleLabel').textContent = last ? ('1 prsten = ' + step + ' m') : 'primjer: ±25 m';
+    if (truthRing && truth) truthRing.setLatLngs([[truth.lat, truth.lon], [last.lat, last.lon]]);
+
+    if (follow) {
+      var z = last.acc > 60 ? 16 : last.acc > 25 ? 17 : 18;
+      map.setView([last.lat, last.lon], Math.max(map.getZoom(), z), { animate: false });
+    }
+  }
+
+  function clearMap() {
+    if (!map) return;
+    if (accCircle) { map.removeLayer(accCircle); accCircle = null; }
+    fixDots.forEach(function (d) { map.removeLayer(d); });
+    fixDots = [];
+    if (truthRing) truthRing.setLatLngs([]);
   }
 
   /* ---------- rendering -------------------------------------------------- */
@@ -364,7 +399,11 @@
         f.alt == null ? '' : f.alt.toFixed(1), source(f)].join(',');
     }).join('\n');
 
-    draw();
+    var off = offset(), offm = offsetMax();
+    $('sOff').textContent = off == null ? '—' : fmt(off) + ' m';
+    $('sOffMax').textContent = offm == null ? '—' : fmt(offm) + ' m';
+
+    drawMap();
   }
 
   /* ---------- the watch -------------------------------------------------- */
@@ -391,7 +430,7 @@
 
   function start() {
     if (!navigator.geolocation) { onErr({ code: 2, message: 'Preglednik nema geolokaciju.' }); return; }
-    fixes = []; marks = { first: null, m20: null, m10: null }; t0 = Date.now();
+    fixes = []; marks = { first: null, m20: null, m10: null }; t0 = Date.now(); follow = true; clearMap();
     watchId = navigator.geolocation.watchPosition(onFix, onErr, {
       enableHighAccuracy: true, maximumAge: 0, timeout: 30000
     });
@@ -414,7 +453,7 @@
 
   $('run').addEventListener('click', function () { watchId == null ? start() : stop(); });
   $('reset').addEventListener('click', function () {
-    stop(); fixes = []; marks = { first: null, m20: null, m10: null }; t0 = 0;
+    stop(); fixes = []; marks = { first: null, m20: null, m10: null }; t0 = 0; follow = true; clearMap();
     $('acc').textContent = '—'; $('acc').style.color = 'var(--ink)';
     $('verdictTitle').textContent = 'mirno'; $('verdictTitle').style.color = 'var(--ink-3)';
     $('verdictSub').textContent = 'mjerenje nije pokrenuto';
@@ -466,7 +505,18 @@
     'wake lock          <span>' + (navigator.wakeLock ? 'ima' : 'nema') + '</span>'
   ].join('\n');
 
-  window.addEventListener('resize', draw);
+  $('segSat').addEventListener('click', function () { swap(true); });
+  $('segMap').addEventListener('click', function () { swap(false); });
+  function swap(sat) {
+    initMap();
+    if (!map) return;
+    map.removeLayer(sat ? layerOsm : layerSat);
+    (sat ? layerSat : layerOsm).addTo(map);
+    $('segSat').setAttribute('aria-pressed', String(sat));
+    $('segMap').setAttribute('aria-pressed', String(!sat));
+  }
+
+  initMap();
   render();
 })();
 </script>
