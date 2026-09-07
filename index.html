@@ -120,6 +120,14 @@
   .wide { width: 100%; height: 42px; margin-top: 8px; }
   .diag { font: 400 10.5px var(--fm); color: var(--ink-4); line-height: 1.75; margin-top: 8px; white-space: pre-wrap; }
   .diag span { color: var(--ink-2); }
+  .test { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; }
+  .test:first-of-type { border-top: 0; padding-top: 0; }
+  .t-head { display: flex; align-items: center; gap: 10px; }
+  .t-head b { flex-grow: 1; font: 600 12.5px var(--fh); }
+  .sm { height: 34px; padding: 0 13px; flex: 0 0 auto; font-size: 12px; }
+  .t-out { font: 400 10.5px var(--fm); color: var(--ink-3); line-height: 1.65; margin-top: 7px; white-space: pre-wrap; word-break: break-word; }
+  .t-out.ok { color: var(--good); }
+  .t-out.warn { color: var(--warn); }
   .alert { border-color: color-mix(in srgb, var(--bad) 40%, transparent); background: color-mix(in srgb, var(--bad) 9%, var(--surface)); }
   .alert .label { color: var(--bad); }
   [hidden] { display: none !important; }
@@ -170,13 +178,45 @@
 
 <div class="sheet" id="sheet" aria-hidden="true">
   <div class="sheet-head">
-    <h2>Detalji</h2>
+    <h2>Detalji i provjere</h2>
     <button class="ghost" id="closeSheet" style="height:38px;padding:0 14px;">Zatvori</button>
   </div>
   <div class="sheet-body">
     <section class="card alert" id="blocked" hidden>
       <div class="label">nema pristupa lokaciji</div>
       <p class="note" id="blockedText" style="color:var(--ink-2)"></p>
+    </section>
+
+    <section class="card">
+      <div class="label">provjere uređaja</div>
+
+      <div class="test">
+        <div class="t-head"><b>Fotoaparat i EXIF</b><button class="ghost sm" id="tCam">Slikaj</button></div>
+        <div class="t-out" id="oCam">Otvori fotoaparat i slikaj bilo što. Mjeri koliko je slika teška, koliko traje od dodira do datoteke, i — najvažnije — nosi li slika GPS u EXIF-u.</div>
+        <input type="file" accept="image/*" capture="environment" id="camIn" hidden>
+      </div>
+
+      <div class="test">
+        <div class="t-head"><b>Smanjivanje slike</b><button class="ghost sm" id="tShrink" disabled>Smanji</button></div>
+        <div class="t-out" id="oShrink">Radi na zadnjoj slici. Pokazuje na koliko se spusti i koliko to traje — od toga ovisi je li slanje s terena uopće izvedivo.</div>
+      </div>
+
+      <div class="test">
+        <div class="t-head"><b>Spremnik na telefonu</b><button class="ghost sm" id="tStore">Provjeri</button></div>
+        <div class="t-out" id="oStore">Sprema sliku u bazu preglednika i čita je natrag. Ovo odlučuje može li prijava čekati u redu dok nema signala.</div>
+      </div>
+
+      <div class="test">
+        <div class="t-head"><b>Hladni start</b><button class="ghost sm" id="tCold">Mjeri</button></div>
+        <div class="t-out" id="oCold">Mjeri koliko treba do prvog položaja bez ijednog spremljenog. Isprobaj jednom s podacima, pa jednom u zrakoplovnom načinu — razlika je ono što korisnik čeka na terenu.</div>
+      </div>
+
+      <div class="test">
+        <div class="t-head"><b>Što uređaj ima</b><button class="ghost sm" id="tCaps">Popiši</button></div>
+        <div class="t-out" id="oCaps">Senzori, dopuštenja i mreža.</div>
+      </div>
+
+      <button class="ghost wide" id="copyTests">Kopiraj rezultate provjera</button>
     </section>
 
     <section class="card">
@@ -493,6 +533,181 @@
     var done = function () { $('copyBtn').textContent = 'Kopirano'; setTimeout(function () { $('copyBtn').textContent = 'Kopiraj podatke'; }, 1500); };
     if (navigator.clipboard) navigator.clipboard.writeText(ta.value).then(done, function () {});
     else { try { document.execCommand('copy'); done(); } catch (e) {} }
+  });
+
+
+  /* ---------- device checks ---------------------------------------------- */
+  var report = [], lastPhoto = null;
+  function say(id, text, cls) {
+    var el = $(id); el.textContent = text; el.className = 't-out' + (cls ? ' ' + cls : '');
+    report.push(id.slice(1) + ': ' + text.replace(/\n/g, ' | '));
+  }
+
+  // Walk the JPEG markers to APP1, then the TIFF IFDs, and see whether a GPS
+  // block is actually there. No library — this is the one claim worth proving.
+  function exifGps(buf) {
+    var v = new DataView(buf);
+    if (v.getUint16(0) !== 0xFFD8) return { jpeg: false };
+    var off = 2, app1 = -1;
+    while (off + 4 < v.byteLength) {
+      if (v.getUint8(off) !== 0xFF) break;
+      var marker = v.getUint8(off + 1), len = v.getUint16(off + 2);
+      if (marker === 0xE1) { app1 = off + 4; break; }
+      if (marker === 0xDA) break;
+      off += 2 + len;
+    }
+    if (app1 < 0) return { jpeg: true, exif: false };
+    var tag = '';
+    for (var i = 0; i < 4; i++) tag += String.fromCharCode(v.getUint8(app1 + i));
+    if (tag !== 'Exif') return { jpeg: true, exif: false };
+    var tiff = app1 + 6;
+    var le = v.getUint16(tiff) === 0x4949;
+    var ifd0 = tiff + v.getUint32(tiff + 4, le);
+    var n = v.getUint16(ifd0, le), gpsPtr = 0, dt = 0;
+    for (var k = 0; k < n; k++) {
+      var e = ifd0 + 2 + k * 12, t = v.getUint16(e, le);
+      if (t === 0x8825) gpsPtr = v.getUint32(e + 8, le);
+      if (t === 0x0132) dt = v.getUint32(e + 8, le);
+    }
+    if (!gpsPtr) return { jpeg: true, exif: true, gps: false, dt: dt ? readAscii(v, tiff + dt, 19) : '' };
+    var g = tiff + gpsPtr, gn = v.getUint16(g, le), got = {};
+    for (var j = 0; j < gn; j++) {
+      var ge = g + 2 + j * 12, gt = v.getUint16(ge, le), cnt = v.getUint32(ge + 4, le), val = v.getUint32(ge + 8, le);
+      if (gt === 1 || gt === 3) got[gt] = String.fromCharCode(v.getUint8(ge + 8));
+      if ((gt === 2 || gt === 4) && cnt === 3) {
+        var base = tiff + val, deg = [];
+        for (var q = 0; q < 3; q++) deg.push(v.getUint32(base + q * 8, le) / v.getUint32(base + q * 8 + 4, le));
+        got[gt] = deg[0] + deg[1] / 60 + deg[2] / 3600;
+      }
+    }
+    var lat = got[2], lon = got[4];
+    if (typeof lat === 'number' && got[1] === 'S') lat = -lat;
+    if (typeof lon === 'number' && got[3] === 'W') lon = -lon;
+    return { jpeg: true, exif: true, gps: gn > 0, lat: lat, lon: lon, n: gn,
+             dt: dt ? readAscii(v, tiff + dt, 19) : '' };
+  }
+  function readAscii(v, at, len) {
+    var out = '';
+    for (var i = 0; i < len && at + i < v.byteLength; i++) { var c = v.getUint8(at + i); if (!c) break; out += String.fromCharCode(c); }
+    return out;
+  }
+
+  var camAsked = 0;
+  $('tCam').addEventListener('click', function () { camAsked = performance.now(); $('camIn').click(); });
+  $('camIn').addEventListener('change', function (ev) {
+    var f = ev.target.files && ev.target.files[0];
+    if (!f) { say('oCam', 'Nije odabrana nijedna slika.', 'warn'); return; }
+    var dt = Math.round(performance.now() - camAsked);
+    lastPhoto = f; $('tShrink').disabled = false;
+    var img = new Image(), url = URL.createObjectURL(f);
+    img.onload = function () {
+      f.arrayBuffer().then(function (buf) {
+        var e = exifGps(buf);
+        var lines = [
+          'veličina        ' + (f.size / 1048576).toFixed(2) + ' MB',
+          'dimenzije       ' + img.naturalWidth + ' × ' + img.naturalHeight,
+          'vrsta           ' + (f.type || 'nepoznata'),
+          'od dodira       ' + (dt / 1000).toFixed(1) + ' s',
+          'EXIF            ' + (e.exif ? 'ima' : 'nema'),
+          'GPS u EXIF-u    ' + (e.gps ? 'DA  ' + (e.lat != null ? e.lat.toFixed(6) + ', ' + e.lon.toFixed(6) : '(' + e.n + ' polja)') : 'NE'),
+          'vrijeme snimanja ' + (e.dt || '—')
+        ];
+        say('oCam', lines.join('\n'), e.gps ? 'ok' : 'warn');
+        URL.revokeObjectURL(url);
+      });
+    };
+    img.onerror = function () { say('oCam', 'Slika se nije dala pročitati.', 'warn'); };
+    img.src = url;
+  });
+
+  $('tShrink').addEventListener('click', function () {
+    if (!lastPhoto) return;
+    var t = performance.now(), img = new Image(), url = URL.createObjectURL(lastPhoto);
+    img.onload = function () {
+      var max = 1600, k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      var c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(function (b) {
+        var ms = Math.round(performance.now() - t);
+        say('oShrink', ['iz  ' + (lastPhoto.size / 1048576).toFixed(2) + ' MB  ' + img.naturalWidth + ' × ' + img.naturalHeight,
+          'u   ' + (b.size / 1048576).toFixed(2) + ' MB  ' + c.width + ' × ' + c.height,
+          'traje ' + ms + ' ms',
+          'EXIF nakon smanjivanja: nema (canvas ga ne prenosi)'].join('\n'), 'ok');
+        URL.revokeObjectURL(url);
+      }, 'image/jpeg', 0.82);
+    };
+    img.src = url;
+  });
+
+  $('tStore').addEventListener('click', function () {
+    var blob = lastPhoto || new Blob([new Uint8Array(1048576)]);
+    var t = performance.now();
+    var req = indexedDB.open('mjerac', 1);
+    req.onupgradeneeded = function () { req.result.createObjectStore('t'); };
+    req.onerror = function () { say('oStore', 'IndexedDB nije dostupan.', 'warn'); };
+    req.onsuccess = function () {
+      var db = req.result, tx = db.transaction('t', 'readwrite');
+      tx.objectStore('t').put(blob, 'x');
+      tx.oncomplete = function () {
+        var wrote = Math.round(performance.now() - t), t2 = performance.now();
+        var rd = db.transaction('t').objectStore('t').get('x');
+        rd.onsuccess = function () {
+          var read = Math.round(performance.now() - t2);
+          var back = rd.result && rd.result.size === blob.size;
+          var fin = function (est) {
+            say('oStore', ['upisano       ' + (blob.size / 1048576).toFixed(2) + ' MB za ' + wrote + ' ms',
+              'pročitano     ' + read + ' ms, ' + (back ? 'ista veličina' : 'NE poklapa se'),
+              'zauzeto       ' + (est ? (est.usage / 1048576).toFixed(1) + ' MB' : '—'),
+              'kvota         ' + (est ? (est.quota / 1073741824).toFixed(2) + ' GB' : '—'),
+              'stane otprilike ' + (est ? Math.floor(est.quota / Math.max(blob.size, 1)) + ' ovakvih' : '—')].join('\n'),
+              back ? 'ok' : 'warn');
+            db.close();
+          };
+          if (navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(fin, function () { fin(null); });
+          else fin(null);
+        };
+      };
+      tx.onerror = function () { say('oStore', 'Upis nije uspio — moguće da je spremnik pun.', 'warn'); db.close(); };
+    };
+  });
+
+  $('tCold').addEventListener('click', function () {
+    say('oCold', 'Mjerim… (do 90 s)');
+    var t = performance.now(), on = navigator.onLine;
+    navigator.geolocation.getCurrentPosition(function (p) {
+      say('oCold', ['mreža          ' + (on ? 'ima' : 'NEMA (zrakoplovni)'),
+        'do prvog fixa  ' + ((performance.now() - t) / 1000).toFixed(1) + ' s',
+        'točnost        ± ' + p.coords.accuracy.toFixed(1) + ' m',
+        'visina         ' + (p.coords.altitude == null ? 'nema (znak mrežnog fixa)' : p.coords.altitude.toFixed(1) + ' m')].join('\n'), 'ok');
+    }, function (e) {
+      say('oCold', 'Nije uspjelo nakon ' + ((performance.now() - t) / 1000).toFixed(1) + ' s (kod ' + e.code + ')', 'warn');
+    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 90000 });
+  });
+
+  $('tCaps').addEventListener('click', function () {
+    var D = window.DeviceOrientationEvent;
+    var lines = [
+      'mreža          ' + (navigator.onLine ? 'ima' : 'nema'),
+      'vrsta veze     ' + ((navigator.connection && navigator.connection.effectiveType) || '—'),
+      'jezgri         ' + (navigator.hardwareConcurrency || '—'),
+      'memorija       ' + (navigator.deviceMemory ? navigator.deviceMemory + ' GB' : '—'),
+      'ekran          ' + window.innerWidth + ' × ' + window.innerHeight + ' @ ' + (window.devicePixelRatio || 1) + 'x',
+      'orijentacija   ' + (D ? (typeof D.requestPermission === 'function' ? 'traži dopuštenje' : 'bez dopuštenja') : 'nema'),
+      'wake lock      ' + (navigator.wakeLock ? (wake ? 'radi' : 'ima') : 'nema'),
+      'dijeljenje     ' + (navigator.share ? 'ima' : 'nema')
+    ];
+    var done = function (extra) { say('oCaps', lines.concat(extra || []).join('\n')); };
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'geolocation' })
+        .then(function (r) { done(['dopuštenje lok. ' + r.state]); }, function () { done(); });
+    } else done(['dopuštenje lok. nedostupno']);
+  });
+
+  $('copyTests').addEventListener('click', function () {
+    var txt = 'PROVJERE — ' + new Date().toISOString() + '\n' + navigator.userAgent + '\n\n' + report.join('\n');
+    var done = function () { $('copyTests').textContent = 'Kopirano'; setTimeout(function () { $('copyTests').textContent = 'Kopiraj rezultate provjera'; }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done, function () {});
   });
 
   /* ---------- compass ---------------------------------------------------- */
