@@ -1,9 +1,31 @@
+# Divlje — teren
+
+Dvije stranice. **`prijava.html`** je radna prijava otpada; **`index.html`** je
+mjerač točnosti kojim se provjerava ono na čemu prijava stoji.
+
+## Prijava
+
+    https://raw.githack.com/BrankaB1201/divlje_mjerac/main/prijava.html
+
+Slikaj otpad — položaj se hvata **u trenutku okidanja**, jer telefon ga u sliku
+ne upisuje. Ako točka nije na pravom mjestu, dodirni satelitsku snimku gdje
+otpad stvarno leži; bilježi se i koliko si je pomaknula. Odaberi vrstu i
+količinu, dopiši opis.
+
+Prijava se **prvo sprema na telefon** pa tek onda šalje kroz izbornik
+dijeljenja — slika i koordinate odu e-poštom. Bez signala čeka u redu i pošalje
+se kad je otvoriš. Ovo je namjerno verzija **bez poslužitelja**: dovoljna da se
+prijava napravi i pošalje, a ništa se ne skuplja na tuđem računalu.
+
+Uz svaku prijavu ide i to koliko je očitanje bilo staro i je li točka ucrtana
+rukom — jer bez toga koordinata izgleda pouzdanije nego što jest.
+
 # Mjerač točnosti
 
 Jedna stranica koja mjeri koliko GNSS na mobitelu stvarno promašuje na
 zadanom mjestu. Nije dio aplikacije — mjerni je alat.
 
-**Otvori:** https://raw.githack.com/BrankaB1201/divlje_mjerac/main/index.html
+    https://raw.githack.com/BrankaB1201/divlje_mjerac/main/index.html
 
 Stani na mjesto, pritisni **Pokreni mjerenje** i pusti minutu-dvije, bez
 hodanja. Stranica onda pokazuje:

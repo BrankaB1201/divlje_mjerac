@@ -1,0 +1,497 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B0F14">
+<title>Divlje — prijava</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0B0F14; --bg-deep: #070A0E;
+    --surface: #0F161D; --surface-hi: #141D26;
+    --line: #1B242E; --line-hi: #2E3A45;
+    --ink: #E8EDF2; --ink-2: #A9B6C2; --ink-3: #75838F; --ink-4: #5E6D7A;
+    --accent: #FFB020; --good: #3FC98C; --warn: #E8A33C; --bad: #E86056;
+    --fh: 'Space Grotesk', system-ui, sans-serif;
+    --fb: 'IBM Plex Sans', system-ui, sans-serif;
+    --pad: max(14px, env(safe-area-inset-left));
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink); font-family: var(--fb);
+    -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+    height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+    padding-top: env(safe-area-inset-top);
+  }
+  .label { font: 500 9.5px var(--fb); letter-spacing: .17em; text-transform: uppercase; color: var(--ink-3); }
+
+  header { display: flex; align-items: center; gap: 10px; padding: 10px var(--pad) 0; flex: 0 0 auto; }
+  .mark { width: 28px; height: 28px; border-radius: 9px; flex-shrink: 0; background: var(--accent);
+          color: var(--bg-deep); display: flex; align-items: center; justify-content: center; }
+  .brand { font: 700 15px var(--fh); letter-spacing: .05em; flex-grow: 1; }
+  .gps { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 13px;
+         border: 1px solid var(--line-hi); font: 500 10.5px var(--fb); color: var(--ink-3); white-space: nowrap; }
+  .gps i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-4); }
+
+  nav { display: flex; gap: 6px; padding: 10px var(--pad); flex: 0 0 auto; }
+  .tab { flex: 1 1 0; height: 40px; border-radius: 11px; border: 1px solid var(--line); background: var(--surface);
+         color: var(--ink-3); font: 600 12.5px var(--fh); cursor: pointer; }
+  .tab[aria-selected="true"] { background: var(--surface-hi); border-color: var(--line-hi); color: var(--ink); }
+  .tab b { color: var(--accent); }
+
+  main { flex: 1 1 auto; overflow-y: auto; padding: 0 var(--pad) 8px;
+         display: flex; flex-direction: column; gap: 14px; }
+  main > * { flex-shrink: 0; min-width: 0; }
+  main[hidden] { display: none; }
+
+  /* photo ------------------------------------------------------------------ */
+  .shot { position: relative; width: 100%; aspect-ratio: 4 / 3; min-height: 200px; border-radius: 16px; overflow: hidden;
+          border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, transparent);
+          background: color-mix(in srgb, var(--accent) 6%, var(--bg-deep));
+          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px;
+          color: var(--accent); cursor: pointer; padding: 0; font-family: var(--fh); }
+  .shot.has { border: 1px solid var(--line-hi); background: var(--bg-deep); }
+  .shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .shot .cap { font: 600 13px var(--fh); }
+  .shot .sub { font: 400 11px var(--fb); color: var(--ink-3); max-width: 76%; text-align: center; line-height: 1.45; }
+  .retake { position: absolute; right: 10px; bottom: 10px; height: 36px; padding: 0 13px; border-radius: 11px;
+            border: 1px solid var(--line-hi); background: rgba(7,10,14,.86); color: var(--ink); font: 600 11.5px var(--fh); }
+
+  /* location --------------------------------------------------------------- */
+  .card { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden; }
+  #map { height: 170px; background: var(--bg-deep); }
+  .loc { display: flex; align-items: center; gap: 10px; padding: 11px 13px; }
+  .loc-main { flex-grow: 1; min-width: 0; }
+  .loc-main b { display: block; font: 600 13px var(--fh); }
+  .loc-main span { font: 400 10.5px var(--fb); color: var(--ink-3); }
+  .badge { flex-shrink: 0; height: 26px; padding: 0 10px; border-radius: 13px; font: 600 10.5px var(--fh);
+           display: inline-flex; align-items: center; }
+
+  /* chips ------------------------------------------------------------------ */
+  .chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .chip { height: 52px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface);
+          color: var(--ink-3); font: 500 11.5px var(--fb); cursor: pointer; padding: 0 6px;
+          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+  .chip .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .chip[aria-pressed="true"] { color: var(--ink); }
+  .chips3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chips3 .chip { height: 44px; }
+
+  textarea { width: 100%; height: 82px; background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+             border-radius: 14px; padding: 12px 13px; font: 400 13px var(--fb); line-height: 1.5; resize: none; }
+  textarea::placeholder { color: var(--ink-4); }
+
+  .bar { display: flex; gap: 8px; padding: 10px var(--pad) max(10px, env(safe-area-inset-bottom)); flex: 0 0 auto;
+         border-top: 1px solid var(--line); background: var(--bg); }
+  button { font-family: var(--fh); cursor: pointer; border-radius: 13px; border: 1px solid var(--line-hi);
+           background: transparent; color: var(--ink-2); font-size: 12.5px; font-weight: 500; }
+  .primary { flex: 1 1 auto; height: 54px; border: 0; background: var(--accent); color: var(--bg-deep);
+             font-weight: 700; font-size: 14px; letter-spacing: .05em;
+             display: flex; align-items: center; justify-content: center; gap: 9px; }
+  .primary:disabled { background: #161F28; color: var(--ink-4); cursor: not-allowed; }
+  .ghost { flex: 0 0 auto; height: 54px; padding: 0 16px; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .hint { text-align: center; font: 400 11px var(--fb); color: var(--ink-3); padding: 0 var(--pad) 6px; }
+
+  /* list ------------------------------------------------------------------- */
+  .row { display: flex; gap: 12px; padding: 11px; border: 1px solid var(--line); border-radius: 14px;
+         background: var(--surface); align-items: center; text-align: left; width: 100%; cursor: pointer; }
+  .row img { width: 58px; height: 58px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--bg-deep); }
+  .row-main { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .row-t { display: flex; align-items: center; gap: 7px; font: 600 13px var(--fh); }
+  .row-s { font: 400 10.5px var(--fb); color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .empty { text-align: center; color: var(--ink-3); font: 400 12.5px var(--fb); line-height: 1.6;
+           padding: 34px 20px; border: 1px dashed var(--line-hi); border-radius: 16px; text-wrap: pretty; }
+  .note { font: 400 11.5px var(--fb); color: var(--ink-4); line-height: 1.55; text-wrap: pretty; margin: 0; }
+  a { color: var(--ink-3); }
+  [hidden] { display: none !important; }
+</style>
+
+<header>
+  <span class="mark" aria-hidden="true">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11Z"/><circle cx="12" cy="10" r="2.4"/></svg>
+  </span>
+  <span class="brand">DIVLJE</span>
+  <span class="gps"><i id="gpsDot"></i><span id="gpsTxt">tražim signal…</span></span>
+</header>
+
+<nav>
+  <button class="tab" id="tabNew" aria-selected="true">Nova prijava</button>
+  <button class="tab" id="tabList" aria-selected="false">Moje prijave <b id="cnt"></b></button>
+</nav>
+
+<main id="viewNew">
+  <div class="shot" id="shot" role="button" tabindex="0" aria-label="Slikaj otpad">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.6A2 2 0 0 1 5 6.6h1.6a1 1 0 0 0 .8-.4l1-1.3a1 1 0 0 1 .8-.4h5.6a1 1 0 0 1 .8.4l1 1.3a1 1 0 0 0 .8.4H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><circle cx="12" cy="12.8" r="3.3"/></svg>
+    <span class="cap">Slikaj otpad</span>
+    <span class="sub">Položaj se uzima u trenutku okidanja, ne iz slike — telefon ga u sliku ne upisuje.</span>
+    <button class="retake" id="retake" type="button" hidden>Slikaj ponovo</button>
+  </div>
+  <input type="file" accept="image/*" capture="environment" id="camIn" hidden>
+
+  <div>
+    <div class="label" style="margin-bottom:8px;">gdje</div>
+    <div class="card">
+      <div id="map"></div>
+      <div class="loc">
+        <span class="loc-main">
+          <b id="locCoord">—</b>
+          <span id="locMeta">čekam položaj</span>
+        </span>
+        <span class="badge" id="locBadge" style="border:1px solid var(--line-hi);color:var(--ink-3)">—</span>
+      </div>
+    </div>
+    <p class="note" style="margin-top:8px;">Ako točka nije na pravom mjestu, <b>dodirni kartu</b> gdje otpad stvarno leži. Zapisuje se i koliko si je pomaknula.</p>
+  </div>
+
+  <div>
+    <div class="label" style="margin-bottom:8px;">što je</div>
+    <div class="chips" id="types"></div>
+  </div>
+
+  <div>
+    <div class="label" style="margin-bottom:8px;">koliko ima</div>
+    <div class="chips chips3" id="sizes"></div>
+  </div>
+
+  <div>
+    <div class="label" style="margin-bottom:8px;">opis</div>
+    <textarea id="note" placeholder="Što se vidi, otkad stoji, kako se prilazi…"></textarea>
+  </div>
+
+  <p class="note">Prijava se prvo sprema na telefon. Slanje ide preko izbornika dijeljenja — odabereš e-poštu inicijative i ode slika s koordinatama. Bez signala čeka u redu.</p>
+</main>
+
+<main id="viewList" hidden>
+  <div id="rows" style="display:flex;flex-direction:column;gap:9px;"></div>
+  <p class="note" id="listFoot" hidden>Prijave stoje na ovom telefonu. Ako ovu stranicu ne otvoriš tjedan dana, iOS ih smije obrisati.</p>
+</main>
+
+<div class="hint" id="hint">Treba fotografija i vrsta otpada.</div>
+<div class="bar">
+  <button class="primary" id="send" disabled>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3.5L14.2 21l-2.6-7.6L4 10.8 21 3.5Z"/></svg>
+    <span id="sendTxt">SPREMI I POŠALJI</span>
+  </button>
+  <button class="ghost" id="clear">Očisti</button>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var R = 6371008.8, rad = function (d) { return d * Math.PI / 180; };
+  function metres(a, b, c, d) {
+    var dx = rad(d - b) * Math.cos(rad((a + c) / 2)) * R, dy = rad(c - a) * R;
+    return Math.hypot(dx, dy);
+  }
+
+  var TYPES = [
+    ['glo', 'Glomazni', '#C28700'], ['gra', 'Građevinski', '#846AF5'], ['pla', 'Plastika', '#00A2D2'],
+    ['gum', 'Gume', '#B43AA8'], ['eeo', 'Elektronički', '#00B06A'], ['opa', 'Opasni', '#D12C32']
+  ];
+  var SIZES = [['v', 'Vreća-dvije'], ['p', 'Prikolica'], ['k', 'Kamion i više']];
+
+  /* ---------- state ------------------------------------------------------- */
+  var live = null;          // best fix the receiver has given us so far
+  var draft = { photo: null, url: null, fix: null, moved: 0, types: {}, size: '' };
+  var db = null, rows = [];
+
+  /* ---------- store ------------------------------------------------------- */
+  function open() {
+    return new Promise(function (res, rej) {
+      var r = indexedDB.open('divlje', 1);
+      r.onupgradeneeded = function () { r.result.createObjectStore('prijave', { keyPath: 'id' }); };
+      r.onsuccess = function () { db = r.result; res(db); };
+      r.onerror = function () { rej(r.error); };
+    });
+  }
+  function put(rec) {
+    return new Promise(function (res, rej) {
+      var tx = db.transaction('prijave', 'readwrite');
+      tx.objectStore('prijave').put(rec);
+      tx.oncomplete = res; tx.onerror = function () { rej(tx.error); };
+    });
+  }
+  function all() {
+    return new Promise(function (res) {
+      var out = [], c = db.transaction('prijave').objectStore('prijave').openCursor();
+      c.onsuccess = function (e) {
+        var cur = e.target.result;
+        if (cur) { out.push(cur.value); cur.continue(); } else { res(out.sort(function (a, b) { return b.ts - a.ts; })); }
+      };
+    });
+  }
+
+  /* ---------- location ---------------------------------------------------- */
+  var map = null, dot = null, ring = null;
+  function initMap() {
+    if (map) return;
+    if (typeof L === 'undefined') {
+      $('map').innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;'
+        + 'padding:0 20px;text-align:center;font:400 11.5px var(--fb);color:var(--ink-3);line-height:1.5">'
+        + 'Karta se nije učitala. Koordinate se svejedno bilježe, samo se točka ne može ispraviti rukom.</div>';
+      return;
+    }
+    map = L.map('map', { zoomControl: false, attributionControl: true }).setView([43.7350, 15.8952], 15);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 19, attribution: 'Esri' }).addTo(map);
+    L.control.scale({ metric: true, imperial: false }).addTo(map);
+    map.on('click', function (e) {
+      if (!draft.fix) return;
+      draft.moved = metres(draft.fix.lat0, draft.fix.lon0, e.latlng.lat, e.latlng.lng);
+      draft.fix.lat = e.latlng.lat; draft.fix.lon = e.latlng.lng; draft.fix.src = 'ručno';
+      paintFix(); check();
+    });
+  }
+  function paintFix() {
+    var f = draft.fix || live;
+    if (!f) return;
+    paintText(f);                       // the numbers must show even if the map never loads
+    if (!map) return;
+    if (!dot) dot = L.circleMarker([f.lat, f.lon], { radius: 6, color: '#E8EDF2', weight: 2, fillColor: '#FFB020', fillOpacity: 1 }).addTo(map);
+    else dot.setLatLng([f.lat, f.lon]);
+    if (!ring) ring = L.circle([f.lat, f.lon], { radius: f.acc, color: '#FFB020', weight: 1.4, fillColor: '#FFB020', fillOpacity: .12 }).addTo(map);
+    else ring.setLatLng([f.lat, f.lon]).setRadius(f.src === 'ručno' ? 3 : f.acc);
+    map.setView([f.lat, f.lon], f.acc > 30 ? 17 : 18, { animate: false });
+  }
+
+  function paintText(f) {
+    $('locCoord').textContent = f.lat.toFixed(6) + ', ' + f.lon.toFixed(6);
+    var bits = [f.src === 'ručno' ? 'ucrtano rukom, pomak ' + Math.round(draft.moved) + ' m' : 'GNSS ± ' + f.acc.toFixed(1) + ' m'];
+    if (f.age != null && f.src !== 'ručno') bits.push('očitanje staro ' + (f.age / 1000).toFixed(0) + ' s');
+    $('locMeta').textContent = bits.join(' · ');
+    var b = $('locBadge'), good = f.src === 'ručno' || f.acc <= 15;
+    b.textContent = f.src === 'ručno' ? 'RUČNO' : (f.acc <= 15 ? 'DOBRO' : 'SLABO');
+    b.style.color = good ? 'var(--good)' : 'var(--warn)';
+    b.style.border = '1px solid ' + (good ? 'rgba(63,201,140,.4)' : 'rgba(232,163,60,.4)');
+  }
+
+  navigator.geolocation && navigator.geolocation.watchPosition(function (p) {
+    var c = p.coords;
+    live = { lat: c.latitude, lon: c.longitude, acc: c.accuracy, src: 'gnss',
+             age: p.timestamp ? Math.max(0, Date.now() - p.timestamp) : null };
+    $('gpsDot').style.background = c.accuracy <= 15 ? 'var(--good)' : 'var(--warn)';
+    $('gpsTxt').textContent = '± ' + c.accuracy.toFixed(0) + ' m';
+    if (!draft.fix) { initMap(); paintFix(); }
+  }, function (e) {
+    $('gpsTxt').textContent = e.code === 1 ? 'lokacija odbijena' : 'nema signala';
+    $('gpsDot').style.background = 'var(--bad)';
+  }, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
+
+  /* ---------- photo ------------------------------------------------------- */
+  $('shot').addEventListener('click', function (e) {
+    if (e.target.closest('#retake')) return;
+    $('camIn').click();
+  });
+  $('shot').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('camIn').click(); }
+  });
+  $('retake').addEventListener('click', function (e) { e.stopPropagation(); $('camIn').click(); });
+
+  $('camIn').addEventListener('change', function (ev) {
+    var f = ev.target.files && ev.target.files[0];
+    if (!f) return;
+    // the fix is frozen at the shutter, because the photo will not carry one
+    draft.fix = live ? { lat: live.lat, lon: live.lon, lat0: live.lat, lon0: live.lon,
+                         acc: live.acc, age: live.age, src: 'gnss' } : null;
+    draft.moved = 0;
+    shrink(f).then(function (blob) {
+      draft.photo = blob;
+      if (draft.url) URL.revokeObjectURL(draft.url);
+      draft.url = URL.createObjectURL(blob);
+      var el = $('shot');
+      el.classList.add('has');
+      var img = el.querySelector('img') || document.createElement('img');
+      img.src = draft.url; if (!img.parentNode) el.insertBefore(img, el.firstChild);
+      el.querySelector('.cap').hidden = true; el.querySelector('.sub').hidden = true;
+      el.querySelector('svg').style.display = 'none';
+      $('retake').hidden = false;
+      initMap(); paintFix(); check();
+    });
+  });
+
+  function shrink(file) {
+    return new Promise(function (res) {
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function () {
+        var k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+        var c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        c.toBlob(function (b) { URL.revokeObjectURL(url); res(b || file); }, 'image/jpeg', 0.82);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); res(file); };
+      img.src = url;
+    });
+  }
+
+  /* ---------- chips ------------------------------------------------------- */
+  TYPES.forEach(function (t) {
+    var b = document.createElement('button');
+    b.className = 'chip'; b.type = 'button'; b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = '<span class="dot" style="background:' + t[2] + '"></span>' + t[1];
+    b.addEventListener('click', function () {
+      if (draft.types[t[0]]) { delete draft.types[t[0]]; } else { draft.types[t[0]] = 1; }
+      var on = !!draft.types[t[0]];
+      b.setAttribute('aria-pressed', String(on));
+      b.style.borderColor = on ? t[2] : 'var(--line)';
+      b.style.background = on ? 'color-mix(in srgb, ' + t[2] + ' 14%, transparent)' : 'var(--surface)';
+      check();
+    });
+    $('types').appendChild(b);
+  });
+  SIZES.forEach(function (sz) {
+    var b = document.createElement('button');
+    b.className = 'chip'; b.type = 'button'; b.textContent = sz[1]; b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', function () {
+      draft.size = draft.size === sz[0] ? '' : sz[0];
+      [].forEach.call($('sizes').children, function (c, i) {
+        var on = SIZES[i][0] === draft.size;
+        c.setAttribute('aria-pressed', String(on));
+        c.style.borderColor = on ? 'var(--accent)' : 'var(--line)';
+        c.style.background = on ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--surface)';
+      });
+      check();
+    });
+    $('sizes').appendChild(b);
+  });
+
+  function typeNames(keys) {
+    return TYPES.filter(function (t) { return keys.indexOf(t[0]) >= 0; }).map(function (t) { return t[1]; });
+  }
+  function check() {
+    var keys = Object.keys(draft.types);
+    var ok = !!draft.photo && keys.length > 0;
+    $('send').disabled = !ok;
+    $('hint').textContent = !draft.photo ? 'Treba fotografija.'
+      : (!keys.length ? 'Odaberi barem jednu vrstu otpada.'
+      : (draft.fix ? 'Spremno — ' + typeNames(keys).join(', ') : 'Spremno, ali bez koordinata.'));
+  }
+
+  /* ---------- save + share ------------------------------------------------ */
+  $('send').addEventListener('click', function () {
+    var keys = Object.keys(draft.types);
+    var rec = {
+      id: 'p' + Date.now(), ts: Date.now(), photo: draft.photo,
+      lat: draft.fix ? draft.fix.lat : null, lon: draft.fix ? draft.fix.lon : null,
+      acc: draft.fix ? draft.fix.acc : null, age: draft.fix ? draft.fix.age : null,
+      src: draft.fix ? draft.fix.src : null, moved: Math.round(draft.moved),
+      types: keys, size: draft.size, note: $('note').value.trim(), status: 'u redu'
+    };
+    put(rec).then(function () {
+      return share(rec).then(function (sent) {
+        if (sent) { rec.status = 'poslano'; return put(rec); }
+      });
+    }).then(function () {
+      reset(); refresh(); showList();
+    }, function (e) {
+      $('hint').textContent = 'Spremanje nije uspjelo: ' + (e && e.name ? e.name : '');
+    });
+  });
+
+  function textFor(rec) {
+    return ['DIVLJE — prijava divljeg odlagališta', '',
+      'Vrsta: ' + typeNames(rec.types).join(', '),
+      'Količina: ' + ((SIZES.filter(function (s) { return s[0] === rec.size; })[0] || ['', '—'])[1]),
+      'Koordinate: ' + (rec.lat == null ? 'nema' : rec.lat.toFixed(6) + ', ' + rec.lon.toFixed(6)),
+      'Točnost: ' + (rec.src === 'ručno' ? 'ucrtano rukom, pomak ' + rec.moved + ' m' : (rec.acc == null ? '—' : '± ' + rec.acc.toFixed(1) + ' m'))
+        + (rec.age != null && rec.src !== 'ručno' ? ', očitanje staro ' + Math.round(rec.age / 1000) + ' s' : ''),
+      'Vrijeme: ' + new Date(rec.ts).toLocaleString('hr-HR'),
+      rec.note ? '\nOpis: ' + rec.note : '',
+      rec.lat == null ? '' : '\nKarta: https://www.openstreetmap.org/?mlat=' + rec.lat.toFixed(6) + '&mlon=' + rec.lon.toFixed(6) + '#map=18/' + rec.lat.toFixed(6) + '/' + rec.lon.toFixed(6)
+    ].filter(Boolean).join('\n');
+  }
+
+  function share(rec) {
+    var file = new File([rec.photo], 'divlje-' + rec.id + '.jpg', { type: 'image/jpeg' });
+    var data = { files: [file], text: textFor(rec), title: 'Divlje — prijava' };
+    if (!navigator.share || !navigator.canShare || !navigator.canShare(data)) {
+      return Promise.resolve(false);
+    }
+    return navigator.share(data).then(function () { return true; }, function () { return false; });
+  }
+
+  function reset() {
+    draft = { photo: null, url: null, fix: null, moved: 0, types: {}, size: '' };
+    var el = $('shot'), img = el.querySelector('img');
+    if (img) img.remove();
+    el.classList.remove('has');
+    el.querySelector('.cap').hidden = false; el.querySelector('.sub').hidden = false;
+    el.querySelector('svg').style.display = '';
+    $('retake').hidden = true;
+    $('note').value = '';
+    [].forEach.call($('types').children, function (c) { c.setAttribute('aria-pressed', 'false'); c.style.borderColor = 'var(--line)'; c.style.background = 'var(--surface)'; });
+    [].forEach.call($('sizes').children, function (c) { c.setAttribute('aria-pressed', 'false'); c.style.borderColor = 'var(--line)'; c.style.background = 'var(--surface)'; });
+    if (dot && map) { map.removeLayer(dot); dot = null; }
+    if (ring && map) { map.removeLayer(ring); ring = null; }
+    paintFix(); check();
+  }
+
+  /* ---------- list -------------------------------------------------------- */
+  function ago(ts) {
+    var s = (Date.now() - ts) / 1000;
+    if (s < 90) return 'upravo';
+    if (s < 5400) return Math.round(s / 60) + ' min';
+    if (s < 172800) return Math.round(s / 3600) + ' h';
+    return new Date(ts).toLocaleDateString('hr-HR');
+  }
+  function refresh() {
+    return all().then(function (list) {
+      rows = list;
+      $('cnt').textContent = list.length ? String(list.length) : '';
+      var box = $('rows'); box.innerHTML = '';
+      $('listFoot').hidden = !list.length;
+      if (!list.length) {
+        box.innerHTML = '<div class="empty">Nema prijava na ovom telefonu.<br>Slikaj otpad i prijava će se pojaviti ovdje.</div>';
+        return;
+      }
+      list.forEach(function (r) {
+        var el = document.createElement('button');
+        el.className = 'row'; el.type = 'button';
+        var t = TYPES.filter(function (x) { return r.types.indexOf(x[0]) >= 0; });
+        var sent = r.status === 'poslano';
+        el.innerHTML =
+          '<img alt="">' +
+          '<span class="row-main">' +
+            '<span class="row-t">' + t.map(function (x) { return '<span class="dot" style="width:9px;height:9px;border-radius:50%;background:' + x[2] + '"></span>'; }).join('') +
+              (t.map(function (x) { return x[1]; }).join(', ') || 'Bez vrste') + '</span>' +
+            '<span class="row-s">' + (r.lat == null ? 'bez koordinata' : r.lat.toFixed(5) + ', ' + r.lon.toFixed(5)) +
+              ' · ' + (r.src === 'ručno' ? 'ručno' : '± ' + (r.acc == null ? '?' : r.acc.toFixed(0)) + ' m') + ' · ' + ago(r.ts) + '</span>' +
+          '</span>' +
+          '<span class="badge" style="color:' + (sent ? 'var(--good)' : 'var(--warn)') + ';border:1px solid ' +
+            (sent ? 'rgba(63,201,140,.4)' : 'rgba(232,163,60,.4)') + '">' + (sent ? 'poslano' : 'u redu') + '</span>';
+        el.querySelector('img').src = URL.createObjectURL(r.photo);
+        el.addEventListener('click', function () {
+          share(r).then(function (sent2) {
+            if (sent2 && r.status !== 'poslano') { r.status = 'poslano'; put(r).then(refresh); }
+          });
+        });
+        box.appendChild(el);
+      });
+    });
+  }
+
+  /* ---------- tabs -------------------------------------------------------- */
+  function showList() { tab(false); }
+  function tab(isNew) {
+    $('viewNew').hidden = !isNew; $('viewList').hidden = isNew;
+    $('tabNew').setAttribute('aria-selected', String(isNew));
+    $('tabList').setAttribute('aria-selected', String(!isNew));
+    $('hint').hidden = !isNew; $('send').parentNode.hidden = !isNew;
+    if (isNew && map) setTimeout(function () { map.invalidateSize(); }, 60);
+  }
+  $('tabNew').addEventListener('click', function () { tab(true); });
+  $('tabList').addEventListener('click', function () { tab(false); refresh(); });
+  $('clear').addEventListener('click', reset);
+
+  open().then(refresh, function () {
+    $('rows').innerHTML = '<div class="empty">Spremnik nije dostupan — prijave se ne mogu čuvati na ovom pregledniku.</div>';
+  });
+  initMap();
+  check();
+})();
+</script>
