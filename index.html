@@ -160,7 +160,7 @@
   <div class="stat"><dt>rasipanje</dt><dd id="sSpread">—</dd></div>
   <div class="stat"><dt>odmak</dt><dd id="sOff">—</dd></div>
   <div class="stat"><dt>najbolje</dt><dd id="sBest">—</dd></div>
-  <div class="stat"><dt>očitanja</dt><dd id="sN">0</dd></div>
+  <div class="stat"><dt>položaja</dt><dd id="sN">—</dd></div>
 </dl>
 
 <div class="bar">
@@ -188,9 +188,11 @@
         <div class="stat"><dt>do ≤ 10 m</dt><dd id="s10">—</dd></div>
         <div class="stat"><dt>stvarno rasipanje</dt><dd id="sSpread2">—</dd></div>
         <div class="stat"><dt>mrežnih očitanja</dt><dd id="sNet">—</dd></div>
+        <div class="stat"><dt>različitih položaja</dt><dd id="sDist">—</dd></div>
         <div class="stat"><dt>odmak od prave točke</dt><dd id="sOff2">—</dd></div>
         <div class="stat"><dt>najveći odmak</dt><dd id="sOffMax">—</dd></div>
       </dl>
+      <p class="note" id="stuckNote" hidden style="color:var(--warn)">Telefon vraća <b>uvijek isti položaj</b>, a mijenja samo procjenu točnosti. iOS to radi: drži zadnju poziciju dok ne odluči da se stvarno pomaknula. Rasipanje se onda ne može izmjeriti — nije nula, nego ga nema. Odmak od prave točke i dalje vrijedi, pa se osloni na njega.</p>
       <p class="note">Rasipanje je najveća udaljenost očitanja od prosjeka dok stojiš na mjestu — koliko je očitanje nemirno. Odmak je udaljenost do točke koju si sama označila na snimci — koliko je krivo. Nemiran može biti točan, i obrnuto.</p>
     </section>
 
@@ -253,8 +255,13 @@
     fixes.forEach(function (f) { la += f.lat; lo += f.lon; });
     return [la / fixes.length, lo / fixes.length];
   }
+  function distinct() {
+    var seen = {};
+    fixes.forEach(function (f) { seen[f.lat.toFixed(7) + ',' + f.lon.toFixed(7)] = 1; });
+    return Object.keys(seen).length;
+  }
   function spread() {
-    if (fixes.length < 2) return null;
+    if (fixes.length < 2 || distinct() < 2) return null;
     var c = centroid(), max = 0;
     fixes.forEach(function (f) { max = Math.max(max, metres(c[0], c[1], f.lat, f.lon)); });
     return max;
@@ -380,7 +387,10 @@
     $('sSpread').textContent = $('sSpread2').textContent = sp == null ? '—' : fmt(sp) + ' m';
     $('sOff').textContent = $('sOff2').textContent = off == null ? '—' : fmt(off) + ' m';
     $('sBest').textContent = $('sBest2').textContent = best == null ? '—' : fmt(best) + ' m';
-    $('sN').textContent = String(fixes.length);
+    var dn = fixes.length ? distinct() : 0;
+    $('sN').textContent = fixes.length ? dn + ' / ' + fixes.length : '—';
+    $('sDist').textContent = fixes.length ? dn + ' od ' + fixes.length : '—';
+    $('stuckNote').hidden = !(fixes.length > 2 && dn === 1);
     $('sOffMax').textContent = offm == null ? '—' : fmt(offm) + ' m';
     $('sFirst').textContent = marks.first == null ? '—' : secs(marks.first);
     $('s20').textContent = marks.m20 == null ? (fixes.length ? 'još ne' : '—') : secs(marks.m20);
