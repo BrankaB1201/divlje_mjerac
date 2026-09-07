@@ -303,7 +303,8 @@
   var marks = { first: null, m20: null, m10: null };
   var map = null, layerSat = null, layerOsm = null;
   var accCircle = null, fixDots = [], truth = null, truthMarker = null, truthRing = null;
-  var follow = true, hereDot = null, tileErrs = 0, tilesOk = false;
+  var follow = true, hereDot = null, tileErrs = 0, tilesOk = false, prog = false;
+  function setViewSafe(ll, z) { prog = true; map.setView(ll, z, { animate: false }); prog = false; }
 
   function metres(a, b, c, d) {
     var dx = rad(d - b) * Math.cos(rad((a + c) / 2)) * R;
@@ -358,15 +359,16 @@
   function initMap() {
     if (map) return;
     if (typeof L === 'undefined') { mapNote('Karta se nije učitala (biblioteka blokirana na ovoj mreži). Brojke i zapis rade.'); return; }
-    map = L.map('map', { zoomControl: false, attributionControl: true }).setView([43.7350, 15.8952], 15);
+    map = L.map('map', { zoomControl: false, attributionControl: true, maxZoom: 21 }).setView([43.7350, 15.8952], 15);
     L.control.zoom({ position: 'topleft' }).addTo(map);
     layerSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19, attribution: 'Esri, Maxar, Earthstar Geographics'
+      maxZoom: 21, maxNativeZoom: 19, attribution: 'Esri, Maxar, Earthstar Geographics'
     }).addTo(map);
-    layerOsm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' });
+    layerOsm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 21, maxNativeZoom: 19, attribution: '&copy; OpenStreetMap' });
     watchTiles(layerSat); watchTiles(layerOsm);
     L.control.scale({ metric: true, imperial: false, position: 'bottomleft' }).addTo(map);
     map.on('dragstart', function () { follow = false; });
+    map.on('zoomstart', function () { if (!prog) follow = false; });
     map.on('click', function (e) { setTruth(e.latlng.lat, e.latlng.lng); });
   }
 
@@ -388,7 +390,7 @@
       var la = p.coords.latitude, lo = p.coords.longitude;
       if (!hereDot) hereDot = L.circleMarker([la, lo], { radius: 6, color: '#E8EDF2', weight: 2, fillColor: '#3FC98C', fillOpacity: .9 }).addTo(map);
       else hereDot.setLatLng([la, lo]);
-      if (!fixes.length) map.setView([la, lo], 18, { animate: false });
+      if (!fixes.length) setViewSafe([la, lo], Math.max(map.getZoom(), 18));
       if ($('mapNote').textContent.indexOf('Tražim') === 0) mapNote('');
     }, function (e) {
       mapNote(e.code === 1
@@ -416,7 +418,7 @@
     if (truthRing && truth) truthRing.setLatLngs([[truth.lat, truth.lon], [last.lat, last.lon]]);
     if (follow) {
       var z = last.acc > 60 ? 16 : last.acc > 25 ? 17 : 18;
-      map.setView([last.lat, last.lon], Math.max(map.getZoom(), z), { animate: false });
+      setViewSafe([last.lat, last.lon], Math.max(map.getZoom(), z));
     }
   }
 
