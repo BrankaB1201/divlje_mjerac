@@ -167,7 +167,7 @@
 <dl class="stats">
   <div class="stat"><dt>rasipanje</dt><dd id="sSpread">—</dd></div>
   <div class="stat"><dt>odmak</dt><dd id="sOff">—</dd></div>
-  <div class="stat"><dt>najbolje</dt><dd id="sBest">—</dd></div>
+  <div class="stat"><dt>starost fixa</dt><dd id="sAge">—</dd></div>
   <div class="stat"><dt>položaja</dt><dd id="sN">—</dd></div>
 </dl>
 
@@ -229,9 +229,11 @@
         <div class="stat"><dt>stvarno rasipanje</dt><dd id="sSpread2">—</dd></div>
         <div class="stat"><dt>mrežnih očitanja</dt><dd id="sNet">—</dd></div>
         <div class="stat"><dt>različitih položaja</dt><dd id="sDist">—</dd></div>
+        <div class="stat"><dt>najstariji fix</dt><dd id="sAgeMax">—</dd></div>
         <div class="stat"><dt>odmak od prave točke</dt><dd id="sOff2">—</dd></div>
         <div class="stat"><dt>najveći odmak</dt><dd id="sOffMax">—</dd></div>
       </dl>
+      <p class="note" id="staleNote" hidden style="color:var(--warn)">Neka očitanja su <b>starija od pet sekundi</b> u trenutku kad su stigla. iOS vraća zadržani položaj i kad se traži svjež (<code>maximumAge: 0</code>), pa je jedina istina o svježini vlastita vremenska oznaka fixa — ova brojka. Ako je velika, čekanje na bolji signal ne radi ništa.</p>
       <p class="note" id="stuckNote" hidden style="color:var(--warn)">Telefon vraća <b>uvijek isti položaj</b>, a mijenja samo procjenu točnosti. iOS to radi: drži zadnju poziciju dok ne odluči da se stvarno pomaknula. Rasipanje se onda ne može izmjeriti — nije nula, nego ga nema. Odmak od prave točke i dalje vrijedi, pa se osloni na njega.</p>
       <p class="note">Rasipanje je najveća udaljenost očitanja od prosjeka dok stojiš na mjestu — koliko je očitanje nemirno. Odmak je udaljenost do točke koju si sama označila na snimci — koliko je krivo. Nemiran može biti točan, i obrnuto.</p>
     </section>
@@ -259,7 +261,7 @@
     <section class="card">
       <div class="label">sirovi zapis</div>
       <div class="log" id="log">Zapis je prazan.</div>
-      <textarea id="csv" readonly aria-label="Podaci za kopiranje">t_s,lat,lon,acc_m,alt_m,izvor
+      <textarea id="csv" readonly aria-label="Podaci za kopiranje">t_s,lat,lon,acc_m,alt_m,izvor,starost_s
 </textarea>
       <button class="ghost wide" id="copyBtn">Kopiraj podatke</button>
       <button class="ghost wide" id="reset">Poništi mjerenje</button>
@@ -426,7 +428,13 @@
 
     $('sSpread').textContent = $('sSpread2').textContent = sp == null ? '—' : fmt(sp) + ' m';
     $('sOff').textContent = $('sOff2').textContent = off == null ? '—' : fmt(off) + ' m';
-    $('sBest').textContent = $('sBest2').textContent = best == null ? '—' : fmt(best) + ' m';
+    $('sBest2').textContent = best == null ? '—' : fmt(best) + ' m';
+    var age = last && last.age != null ? last.age : null;
+    var ageMax = fixes.reduce(function (m, f) { return f.age == null ? m : Math.max(m, f.age); }, 0);
+    $('sAge').textContent = age == null ? '—' : (age / 1000).toFixed(1) + ' s';
+    $('sAge').style.color = age != null && age > 5000 ? 'var(--warn)' : '';
+    $('sAgeMax').textContent = fixes.length ? (ageMax / 1000).toFixed(1) + ' s' : '—';
+    $('staleNote').hidden = !(ageMax > 5000);
     var dn = fixes.length ? distinct() : 0;
     $('sN').textContent = fixes.length ? dn + ' / ' + fixes.length : '—';
     $('sDist').textContent = fixes.length ? dn + ' od ' + fixes.length : '—';
@@ -444,9 +452,9 @@
     });
     $('log').innerHTML = lines.length ? lines.join('\n') : 'Zapis je prazan.';
     $('log').scrollTop = $('log').scrollHeight;
-    $('csv').value = 't_s,lat,lon,acc_m,alt_m,izvor\n' + fixes.map(function (f) {
+    $('csv').value = 't_s,lat,lon,acc_m,alt_m,izvor,starost_s\n' + fixes.map(function (f) {
       return [(f.t / 1000).toFixed(1), f.lat.toFixed(7), f.lon.toFixed(7), f.acc.toFixed(1),
-        f.alt == null ? '' : f.alt.toFixed(1), source(f)].join(',');
+        f.alt == null ? '' : f.alt.toFixed(1), source(f), f.age == null ? '' : (f.age / 1000).toFixed(1)].join(',');
     }).join('\n');
 
     drawMap();
@@ -456,7 +464,8 @@
   function onFix(p) {
     var now = Date.now(), c = p.coords;
     if (marks.first == null) marks.first = now - t0;
-    fixes.push({ t: now - t0, lat: c.latitude, lon: c.longitude, acc: c.accuracy, alt: c.altitude });
+    fixes.push({ t: now - t0, lat: c.latitude, lon: c.longitude, acc: c.accuracy, alt: c.altitude,
+      age: p.timestamp ? Math.max(0, now - p.timestamp) : null });
     if (marks.m20 == null && c.accuracy <= 20) marks.m20 = now - t0;
     if (marks.m10 == null && c.accuracy <= 10) marks.m10 = now - t0;
     $('blocked').hidden = true;
@@ -610,7 +619,7 @@
           'od dodira       ' + (dt / 1000).toFixed(1) + ' s',
           'EXIF            ' + (e.exif ? 'ima' : 'nema'),
           'GPS u EXIF-u    ' + (e.gps ? 'DA  ' + (e.lat != null ? e.lat.toFixed(6) + ', ' + e.lon.toFixed(6) : '(' + e.n + ' polja)') : 'NE'),
-          'vrijeme snimanja ' + (e.dt || '—')
+          'vrijeme (IFD0)  ' + (e.dt || 'nema — provjerava se samo IFD0, ne i Exif pod-blok')
         ];
         say('oCam', lines.join('\n'), e.gps ? 'ok' : 'warn');
         URL.revokeObjectURL(url);
@@ -676,8 +685,10 @@
     say('oCold', 'Mjerim… (do 90 s)');
     var t = performance.now(), on = navigator.onLine;
     navigator.geolocation.getCurrentPosition(function (p) {
+      var ageMs = p.timestamp ? Math.max(0, Date.now() - p.timestamp) : null;
       say('oCold', ['mreža          ' + (on ? 'ima' : 'NEMA (zrakoplovni)'),
         'do prvog fixa  ' + ((performance.now() - t) / 1000).toFixed(1) + ' s',
+        'starost fixa   ' + (ageMs == null ? '—' : (ageMs / 1000).toFixed(1) + ' s' + (ageMs > 3000 ? '  ← zadržani, nije svjež' : '')),
         'točnost        ± ' + p.coords.accuracy.toFixed(1) + ' m',
         'visina         ' + (p.coords.altitude == null ? 'nema (znak mrežnog fixa)' : p.coords.altitude.toFixed(1) + ' m')].join('\n'), 'ok');
     }, function (e) {
