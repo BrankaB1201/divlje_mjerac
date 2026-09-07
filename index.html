@@ -216,6 +216,31 @@
         <div class="t-out" id="oCaps">Senzori, dopuštenja i mreža.</div>
       </div>
 
+      <div class="test">
+        <div class="t-head"><b>Radi li u pozadini</b><button class="ghost sm" id="tBg">Pokreni</button></div>
+        <div class="t-out" id="oBg">Pritisni, pa <b>zaključaj ekran ili prijeđi u drugu aplikaciju na tridesetak sekundi</b> i vrati se. Broji koliko je položaja stiglo dok te nije bilo. Ako je nula, aplikacija ne smije ništa raditi u pozadini.</div>
+      </div>
+
+      <div class="test">
+        <div class="t-head"><b>Sat na telefonu</b><button class="ghost sm" id="tClock">Provjeri</button></div>
+        <div class="t-out" id="oClock">Uspoređuje sat telefona sa satom poslužitelja. Vrijeme snimanja je jedini vremenski dokaz koji prijava ima, pa je bolje znati koliko mu se smije vjerovati.</div>
+      </div>
+
+      <div class="test">
+        <div class="t-head"><b>Brzina veze</b><button class="ghost sm" id="tNet">Izmjeri</button></div>
+        <div class="t-out" id="oNet">Skida oko 0,6 MB i mjeri koliko traje. <b>Troši malo podataka.</b> Odgovara na to hoće li se prijava s tri slike uopće moći poslati s ovog mjesta.</div>
+      </div>
+
+      <div class="test">
+        <div class="t-head"><b>Orijentacija slike</b><button class="ghost sm" id="tOri" disabled>Provjeri</button></div>
+        <div class="t-out" id="oOri">Radi na zadnjoj slici. Fotografije s telefona nose oznaku zakrenutosti; ako se pri smanjivanju izgubi, dokazna slika ispadne postrance.</div>
+      </div>
+
+      <div class="test">
+        <div class="t-head"><b>Slanje van preglednika</b><button class="ghost sm" id="tShare" disabled>Podijeli</button></div>
+        <div class="t-out" id="oShare">Pokušava poslati zadnju sliku s koordinatama kroz izbornik dijeljenja. Ako radi, prva verzija aplikacije može ići bez ijednog poslužitelja — slika i koordinate idu e-poštom inicijativi.</div>
+      </div>
+
       <button class="ghost wide" id="copyTests">Kopiraj rezultate provjera</button>
     </section>
 
@@ -546,7 +571,7 @@
 
 
   /* ---------- device checks ---------------------------------------------- */
-  var report = [], lastPhoto = null;
+  var report = [], lastPhoto = null, lastExif = null, lastDims = null, lastSmall = null;
   function say(id, text, cls) {
     var el = $(id); el.textContent = text; el.className = 't-out' + (cls ? ' ' + cls : '');
     report.push(id.slice(1) + ': ' + text.replace(/\n/g, ' | '));
@@ -572,13 +597,14 @@
     var tiff = app1 + 6;
     var le = v.getUint16(tiff) === 0x4949;
     var ifd0 = tiff + v.getUint32(tiff + 4, le);
-    var n = v.getUint16(ifd0, le), gpsPtr = 0, dt = 0;
+    var n = v.getUint16(ifd0, le), gpsPtr = 0, dt = 0, ori = 0;
     for (var k = 0; k < n; k++) {
       var e = ifd0 + 2 + k * 12, t = v.getUint16(e, le);
       if (t === 0x8825) gpsPtr = v.getUint32(e + 8, le);
       if (t === 0x0132) dt = v.getUint32(e + 8, le);
+      if (t === 0x0112) ori = v.getUint16(e + 8, le);
     }
-    if (!gpsPtr) return { jpeg: true, exif: true, gps: false, dt: dt ? readAscii(v, tiff + dt, 19) : '' };
+    if (!gpsPtr) return { jpeg: true, exif: true, gps: false, ori: ori, dt: dt ? readAscii(v, tiff + dt, 19) : '' };
     var g = tiff + gpsPtr, gn = v.getUint16(g, le), got = {};
     for (var j = 0; j < gn; j++) {
       var ge = g + 2 + j * 12, gt = v.getUint16(ge, le), cnt = v.getUint32(ge + 4, le), val = v.getUint32(ge + 8, le);
@@ -592,7 +618,7 @@
     var lat = got[2], lon = got[4];
     if (typeof lat === 'number' && got[1] === 'S') lat = -lat;
     if (typeof lon === 'number' && got[3] === 'W') lon = -lon;
-    return { jpeg: true, exif: true, gps: gn > 0, lat: lat, lon: lon, n: gn,
+    return { jpeg: true, exif: true, gps: gn > 0, lat: lat, lon: lon, n: gn, ori: ori,
              dt: dt ? readAscii(v, tiff + dt, 19) : '' };
   }
   function readAscii(v, at, len) {
@@ -607,7 +633,8 @@
     var f = ev.target.files && ev.target.files[0];
     if (!f) { say('oCam', 'Nije odabrana nijedna slika.', 'warn'); return; }
     var dt = Math.round(performance.now() - camAsked);
-    lastPhoto = f; $('tShrink').disabled = false;
+    lastPhoto = f; $('tShrink').disabled = false; $('tOri').disabled = false;
+    $('tShare').disabled = !(navigator.share && navigator.canShare);
     var img = new Image(), url = URL.createObjectURL(f);
     img.onload = function () {
       f.arrayBuffer().then(function (buf) {
@@ -621,6 +648,7 @@
           'GPS u EXIF-u    ' + (e.gps ? 'DA  ' + (e.lat != null ? e.lat.toFixed(6) + ', ' + e.lon.toFixed(6) : '(' + e.n + ' polja)') : 'NE'),
           'vrijeme (IFD0)  ' + (e.dt || 'nema — provjerava se samo IFD0, ne i Exif pod-blok')
         ];
+        lastExif = e; lastDims = [img.naturalWidth, img.naturalHeight];
         say('oCam', lines.join('\n'), e.gps ? 'ok' : 'warn');
         URL.revokeObjectURL(url);
       });
@@ -638,6 +666,7 @@
       c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
       c.toBlob(function (b) {
+        lastSmall = b;
         var ms = Math.round(performance.now() - t);
         say('oShrink', ['iz  ' + (lastPhoto.size / 1048576).toFixed(2) + ' MB  ' + img.naturalWidth + ' × ' + img.naturalHeight,
           'u   ' + (b.size / 1048576).toFixed(2) + ' MB  ' + c.width + ' × ' + c.height,
@@ -713,6 +742,101 @@
       navigator.permissions.query({ name: 'geolocation' })
         .then(function (r) { done(['dopuštenje lok. ' + r.state]); }, function () { done(); });
     } else done(['dopuštenje lok. nedostupno']);
+  });
+
+
+  // Does anything keep running once she leaves the page? On iOS a backgrounded
+  // tab is suspended, which would rule out any "leave it going" design.
+  var bg = null;
+  $('tBg').addEventListener('click', function () {
+    if (bg) return;
+    bg = { start: Date.now(), hidden: 0, hiddenAt: 0, fixes: 0, hiddenFixes: 0, id: null };
+    say('oBg', 'Radi. Zaključaj ekran ili prijeđi u drugu aplikaciju, pa se vrati.');
+    bg.id = navigator.geolocation.watchPosition(function () {
+      bg.fixes += 1;
+      if (document.hidden) bg.hiddenFixes += 1;
+    }, function () {}, { enableHighAccuracy: true, maximumAge: 0 });
+    document.addEventListener('visibilitychange', onVis);
+    setTimeout(function () { if (bg) finishBg('isteklo nakon 3 min'); }, 180000);
+  });
+  function onVis() {
+    if (!bg) return;
+    if (document.hidden) { bg.hiddenAt = Date.now(); }
+    else if (bg.hiddenAt) {
+      bg.hidden += Date.now() - bg.hiddenAt; bg.hiddenAt = 0;
+      if (bg.hidden > 8000) finishBg('vratila si se');
+    }
+  }
+  function finishBg(why) {
+    if (!bg) return;
+    navigator.geolocation.clearWatch(bg.id);
+    document.removeEventListener('visibilitychange', onVis);
+    var ok = bg.hiddenFixes > 0;
+    say('oBg', ['izvan ekrana   ' + (bg.hidden / 1000).toFixed(1) + ' s  (' + why + ')',
+      'ukupno fixeva  ' + bg.fixes,
+      'dok si bila van ' + bg.hiddenFixes,
+      ok ? 'zaključak      radi u pozadini' : 'zaključak      NE radi u pozadini — sve staje čim izađeš'].join('\n'), ok ? 'ok' : 'warn');
+    bg = null;
+  }
+
+  // The report's only timestamp is the phone's own, so it is worth knowing
+  // how far off it is. Date is a CORS-safelisted header, so this reads.
+  var PROBE = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+  $('tClock').addEventListener('click', function () {
+    say('oClock', 'Provjeravam…');
+    var t0 = Date.now();
+    fetch(PROBE, { cache: 'no-store' }).then(function (r) {
+      var t1 = Date.now(), h = r.headers.get('date');
+      if (!h) { say('oClock', 'Poslužitelj nije poslao vrijeme.', 'warn'); return; }
+      var server = new Date(h).getTime(), mid = t0 + (t1 - t0) / 2, off = mid - server;
+      say('oClock', ['sat telefona   ' + new Date(mid).toISOString().slice(11, 19),
+        'sat mreže      ' + new Date(server).toISOString().slice(11, 19),
+        'razlika        ' + (off / 1000).toFixed(1) + ' s' + (Math.abs(off) > 30000 ? '  ← puno' : ''),
+        'mjerna nesig.  ±' + ((t1 - t0) / 2000).toFixed(1) + ' s (put do poslužitelja)'].join('\n'),
+        Math.abs(off) > 30000 ? 'warn' : 'ok');
+    }, function () { say('oClock', 'Nema veze do poslužitelja.', 'warn'); });
+  });
+
+  var BIG = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  $('tNet').addEventListener('click', function () {
+    say('oNet', 'Skidam…');
+    var t = performance.now();
+    fetch(BIG, { cache: 'no-store' }).then(function (r) { return r.arrayBuffer(); }).then(function (b) {
+      var sec = (performance.now() - t) / 1000, mb = b.byteLength / 1048576;
+      var mbit = (b.byteLength * 8 / 1e6) / sec;
+      var report15 = 1.5 * 8 / mbit;
+      say('oNet', ['skinuto        ' + mb.toFixed(2) + ' MB za ' + sec.toFixed(1) + ' s',
+        'brzina         ' + mbit.toFixed(1) + ' Mbit/s (skidanje)',
+        'prijava 1,5 MB ~' + report15.toFixed(0) + ' s da je slanje jednako brzo',
+        'slanje je u pravilu sporije, računaj dvostruko'].join('\n'), mbit > 1 ? 'ok' : 'warn');
+    }, function () { say('oNet', 'Skidanje nije uspjelo — nema veze ili je izvor blokiran.', 'warn'); });
+  });
+
+  var ORI = { 1: 'uspravno', 3: 'okrenuto 180°', 6: 'zakrenuto 90° u smjeru kazaljke', 8: 'zakrenuto 90° suprotno' };
+  $('tOri').addEventListener('click', function () {
+    if (!lastExif || !lastDims) return;
+    var o = lastExif.ori || 0;
+    var portrait = lastDims[1] > lastDims[0];
+    var applied = (o === 6 || o === 8) ? portrait : true;
+    say('oOri', ['EXIF oznaka    ' + (o ? o + ' — ' + (ORI[o] || 'ostalo') : 'nema'),
+      'kako je dekodirana ' + lastDims[0] + ' × ' + lastDims[1] + (portrait ? '  (uspravna)' : '  (položena)'),
+      'preglednik ju je ' + (applied ? 'već primijenio' : 'NIJE primijenio — smanjena slika bi ispala postrance'),
+      lastSmall ? 'smanjena kopija ' + (lastSmall.size / 1048576).toFixed(2) + ' MB, bez EXIF-a' : 'smanjena kopija nije napravljena'].join('\n'),
+      applied ? 'ok' : 'warn');
+  });
+
+  $('tShare').addEventListener('click', function () {
+    var f = lastSmall ? new File([lastSmall], 'prijava.jpg', { type: 'image/jpeg' }) : lastPhoto;
+    if (!f) { say('oShare', 'Prvo slikaj.', 'warn'); return; }
+    var last = fixes[fixes.length - 1];
+    var txt = 'Divlje — probna prijava\n' + (last ? last.lat.toFixed(6) + ', ' + last.lon.toFixed(6) + '  ±' + last.acc.toFixed(1) + ' m' : 'bez koordinata');
+    var data = { files: [f], text: txt, title: 'Divlje' };
+    if (!navigator.canShare || !navigator.canShare(data)) { say('oShare', 'Dijeljenje datoteke nije podržano na ovom pregledniku.', 'warn'); return; }
+    navigator.share(data).then(function () {
+      say('oShare', ['datoteka       ' + (f.size / 1048576).toFixed(2) + ' MB',
+        'tekst          ' + txt.replace('\n', ' · '),
+        'zaključak      radi — v0 može ići bez poslužitelja'].join('\n'), 'ok');
+    }, function (e) { say('oShare', 'Odustala si ili nije uspjelo: ' + (e && e.name ? e.name : ''), 'warn'); });
   });
 
   $('copyTests').addEventListener('click', function () {
