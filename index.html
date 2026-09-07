@@ -217,7 +217,7 @@
       </div>
 
       <div class="test">
-        <div class="t-head"><b>Radi li u pozadini</b><button class="ghost sm" id="tBg">Pokreni</button></div>
+        <div class="t-head"><b>Radi li u pozadini</b><button class="ghost sm" id="tBgEnd" hidden>Završi</button><button class="ghost sm" id="tBg">Pokreni</button></div>
         <div class="t-out" id="oBg">Pritisni, pa <b>zaključaj ekran ili prijeđi u drugu aplikaciju na tridesetak sekundi</b> i vrati se. Broji koliko je položaja stiglo dok te nije bilo. Ako je nula, aplikacija ne smije ništa raditi u pozadini.</div>
       </div>
 
@@ -751,7 +751,8 @@
   $('tBg').addEventListener('click', function () {
     if (bg) return;
     bg = { start: Date.now(), hidden: 0, hiddenAt: 0, fixes: 0, hiddenFixes: 0, id: null };
-    say('oBg', 'Radi. Zaključaj ekran ili prijeđi u drugu aplikaciju, pa se vrati.');
+    $('tBg').hidden = true; $('tBgEnd').hidden = false;
+    say('oBg', 'Radi. Zaključaj ekran ili prijeđi u drugu aplikaciju, pa se vrati — pa pritisni Završi.');
     bg.id = navigator.geolocation.watchPosition(function () {
       bg.fixes += 1;
       if (document.hidden) bg.hiddenFixes += 1;
@@ -764,7 +765,7 @@
     if (document.hidden) { bg.hiddenAt = Date.now(); }
     else if (bg.hiddenAt) {
       bg.hidden += Date.now() - bg.hiddenAt; bg.hiddenAt = 0;
-      if (bg.hidden > 8000) finishBg('vratila si se');
+      if (bg.hidden > 20000) finishBg('vratila si se');
     }
   }
   function finishBg(why) {
@@ -777,17 +778,20 @@
       'dok si bila van ' + bg.hiddenFixes,
       ok ? 'zaključak      radi u pozadini' : 'zaključak      NE radi u pozadini — sve staje čim izađeš'].join('\n'), ok ? 'ok' : 'warn');
     bg = null;
+    $('tBg').hidden = false; $('tBgEnd').hidden = true;
   }
+
+  $('tBgEnd').addEventListener('click', function () { finishBg('ručno zaustavljeno'); });
 
   // The report's only timestamp is the phone's own, so it is worth knowing
   // how far off it is. Date is a CORS-safelisted header, so this reads.
-  var PROBE = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
   $('tClock').addEventListener('click', function () {
     say('oClock', 'Provjeravam…');
     var t0 = Date.now();
-    fetch(PROBE, { cache: 'no-store' }).then(function (r) {
+    fetch(location.href.split('#')[0] + (location.search ? '&' : '?') + '_t=' + t0,
+          { method: 'HEAD', cache: 'no-store' }).then(function (r) {
       var t1 = Date.now(), h = r.headers.get('date');
-      if (!h) { say('oClock', 'Poslužitelj nije poslao vrijeme.', 'warn'); return; }
+      if (!h) { say('oClock', 'Poslužitelj nije poslao čitljivo vrijeme (zaglavlje Date nije izloženo).', 'warn'); return; }
       var server = new Date(h).getTime(), mid = t0 + (t1 - t0) / 2, off = mid - server;
       say('oClock', ['sat telefona   ' + new Date(mid).toISOString().slice(11, 19),
         'sat mreže      ' + new Date(server).toISOString().slice(11, 19),
@@ -807,7 +811,7 @@
       var report15 = 1.5 * 8 / mbit;
       say('oNet', ['skinuto        ' + mb.toFixed(2) + ' MB za ' + sec.toFixed(1) + ' s',
         'brzina         ' + mbit.toFixed(1) + ' Mbit/s (skidanje)',
-        'prijava 1,5 MB ~' + report15.toFixed(0) + ' s da je slanje jednako brzo',
+        'prijava 1,5 MB ' + (report15 < 1 ? 'manje od sekunde' : '~' + report15.toFixed(1) + ' s') + ' da je slanje jednako brzo',
         'slanje je u pravilu sporije, računaj dvostruko'].join('\n'), mbit > 1 ? 'ok' : 'warn');
     }, function () { say('oNet', 'Skidanje nije uspjelo — nema veze ili je izvor blokiran.', 'warn'); });
   });
