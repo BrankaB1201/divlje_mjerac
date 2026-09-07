@@ -179,6 +179,7 @@
   <div id="map"></div>
   <div class="ov segmented">
     <button class="seg" id="segSat" aria-pressed="true">Satelit</button>
+    <button class="seg" id="segDof" aria-pressed="false">DOF</button>
     <button class="seg" id="segMap" aria-pressed="false">Karta</button>
   </div>
   <div class="ov" id="mapNote" hidden></div>
@@ -302,6 +303,42 @@
   var fixes = [], watchId = null, t0 = 0, tick = null, wake = null;
   var marks = { first: null, m20: null, m10: null };
   var map = null, layerSat = null, layerOsm = null;
+  // Croatian state orthophoto. Sharper over Croatia than any global mosaic, free
+  // for anonymous use, and it is the imagery the cadastre itself works against.
+  // The layer name could not be verified from here, so the candidates are tried
+  // in turn and the one whose tiles actually load wins.
+  var DOF_TRY = [
+    ['https://geoportal.dgu.hr/services/inspire/orthophoto_2022/wms', 'OI.OrthoimageCoverage'],
+    ['https://geoportal.dgu.hr/services/inspire/orthophoto_2021/wms', 'OI.OrthoimageCoverage'],
+    ['https://geoportal.dgu.hr/services/inspire/orthophoto_2017/wms', 'OI.OrthoimageCoverage'],
+    ['https://geoportal.dgu.hr/services/dof/wms', 'DOF'],
+    ['https://geoportal.dgu.hr/services/dof/wms', 'DOF5_2011']
+  ];
+  var dofIdx = 0, dofLayer = null;
+
+  function buildDof() {
+    var c = DOF_TRY[dofIdx], errs = 0, ok = false;
+    var l = L.tileLayer.wms(c[0], {
+      layers: c[1], format: 'image/jpeg', transparent: false, version: '1.3.0',
+      maxZoom: 21, attribution: 'DGU · DOF'
+    });
+    l.on('tileload', function () { ok = true; });
+    l.on('tileerror', function () {
+      errs += 1;
+      if (ok || errs < 4) return;
+      errs = 0;
+      if (dofIdx < DOF_TRY.length - 1) {
+        dofIdx += 1;
+        if (map.hasLayer(l)) { map.removeLayer(l); dofLayer = buildDof(); dofLayer.addTo(map); }
+        else { dofLayer = null; }
+      } else if (map.hasLayer(l)) {
+        map.removeLayer(l); pickLayer('sat');
+        dofNote('Državni ortofoto se ne učitava — vraćam satelit.');
+      }
+    });
+    return l;
+  }
+
   var accCircle = null, fixDots = [], truth = null, truthMarker = null, truthRing = null;
   var follow = true, hereDot = null, tileErrs = 0, tilesOk = false, prog = false;
   function setViewSafe(ll, z) { prog = true; map.setView(ll, z, { animate: false }); prog = false; }
@@ -545,15 +582,20 @@
   on('closeSheet', 'click', function () { sheet(false); });
 
   on('here', 'click', function () { follow = true; locateOnce(); });
-  on('segSat', 'click', function () { swap(true); });
-  on('segMap', 'click', function () { swap(false); });
-  function swap(sat) {
+  on('segSat', 'click', function () { pickLayer('sat'); });
+  on('segDof', 'click', function () { pickLayer('dof'); });
+  on('segMap', 'click', function () { pickLayer('osm'); });
+  function dofNote(t) { mapNote(t); }
+  function pickLayer(which) {
     initMap();
     if (!map) return;
-    map.removeLayer(sat ? layerOsm : layerSat);
-    (sat ? layerSat : layerOsm).addTo(map);
-    $('segSat').setAttribute('aria-pressed', String(sat));
-    $('segMap').setAttribute('aria-pressed', String(!sat));
+    [layerSat, layerOsm, dofLayer].forEach(function (l) { if (l && map.hasLayer(l)) map.removeLayer(l); });
+    if (which === 'sat') layerSat.addTo(map);
+    else if (which === 'osm') layerOsm.addTo(map);
+    else { if (!dofLayer) dofLayer = buildDof(); dofLayer.addTo(map); }
+    $('segSat').setAttribute('aria-pressed', String(which === 'sat'));
+    $('segDof').setAttribute('aria-pressed', String(which === 'dof'));
+    $('segMap').setAttribute('aria-pressed', String(which === 'osm'));
   }
 
   on('copyBtn', 'click', function () {
