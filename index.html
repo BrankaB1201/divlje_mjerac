@@ -1,3 +1,6 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B0F14">
 <title>Točnost na terenu</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -6,254 +9,225 @@
 <style>
   :root {
     color-scheme: dark;
-    --bg: #0B0F14;
-    --bg-deep: #070A0E;
-    --surface: #0F161D;
-    --surface-hi: #141D26;
-    --line: #1B242E;
-    --line-hi: #2E3A45;
-    --ink: #E8EDF2;
-    --ink-2: #A9B6C2;
-    --ink-3: #75838F;
-    --ink-4: #5E6D7A;
-    --accent: #FFB020;
-    --good: #3FC98C;
-    --warn: #E8A33C;
-    --bad: #E86056;
+    --bg: #0B0F14; --bg-deep: #070A0E;
+    --surface: #0F161D; --surface-hi: #141D26;
+    --line: #1B242E; --line-hi: #2E3A45;
+    --ink: #E8EDF2; --ink-2: #A9B6C2; --ink-3: #75838F; --ink-4: #5E6D7A;
+    --accent: #FFB020; --good: #3FC98C; --warn: #E8A33C; --bad: #E86056;
     --fh: 'Space Grotesk', system-ui, sans-serif;
     --fb: 'IBM Plex Sans', system-ui, sans-serif;
     --fm: 'IBM Plex Mono', ui-monospace, monospace;
+    --pad: max(12px, env(safe-area-inset-left));
   }
-
   * { box-sizing: border-box; }
+  html, body { height: 100%; }
   body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: var(--fb);
-    -webkit-font-smoothing: antialiased;
-    -webkit-tap-highlight-color: transparent;
+    margin: 0; background: var(--bg); color: var(--ink); font-family: var(--fb);
+    -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+    height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+    padding-top: env(safe-area-inset-top);
   }
-  .wrap { max-width: 480px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 14px; }
-  .wrap > * { min-width: 0; }
+  .label { font: 500 9px var(--fb); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
 
-  header { display: flex; align-items: flex-start; gap: 12px; }
-  .mark {
-    width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
-    background: var(--accent); color: var(--bg-deep);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .titles { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-  h1 { font: 700 19px var(--fh); letter-spacing: .01em; margin: 0; text-wrap: balance; }
-  .sub { font: 400 12px var(--fb); color: var(--ink-3); line-height: 1.45; }
-
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
-  .label {
-    font: 500 9.5px var(--fb); letter-spacing: .17em; text-transform: uppercase; color: var(--ink-3);
-  }
+  /* header ---------------------------------------------------------------- */
+  header { display: flex; align-items: center; gap: 9px; padding: 9px var(--pad) 7px; flex: 0 0 auto; }
+  .mark { width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0; background: var(--accent);
+          color: var(--bg-deep); display: flex; align-items: center; justify-content: center; }
+  h1 { font: 700 14.5px var(--fh); margin: 0; flex-grow: 1; }
+  .srcpill { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px;
+             border-radius: 12px; border: 1px solid var(--line-hi); color: var(--ink-3);
+             font: 500 10px var(--fb); white-space: nowrap; }
+  .srcpill i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-4); }
 
   /* live reading ---------------------------------------------------------- */
-  .reading { display: flex; align-items: flex-end; gap: 14px; margin-top: 12px; }
-  .acc { font: 700 60px var(--fh); line-height: .88; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-  .acc-unit { font: 500 17px var(--fh); color: var(--ink-3); padding-bottom: 6px; }
-  .verdict { margin-left: auto; text-align: right; display: flex; flex-direction: column; gap: 4px; padding-bottom: 4px; min-width: 0; }
-  .verdict b { font: 600 13px var(--fh); }
-  .verdict span { font: 400 11px var(--fb); color: var(--ink-3); text-wrap: pretty; }
+  .live { display: flex; align-items: baseline; gap: 8px; padding: 0 var(--pad) 9px; flex: 0 0 auto; }
+  .acc { font: 700 40px var(--fh); line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .unit { font: 500 13px var(--fh); color: var(--ink-3); }
+  .verdict { margin-left: auto; text-align: right; min-width: 0; }
+  .verdict b { display: block; font: 600 12px var(--fh); }
+  .verdict span { font: 400 10px var(--fb); color: var(--ink-3); }
 
-  .strip { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
-  .pill {
-    display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 11px;
-    border-radius: 13px; border: 1px solid var(--line-hi); color: var(--ink-2);
-    font: 500 11px var(--fb); white-space: nowrap;
-  }
-  .pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-4); font-style: normal; }
-
-  /* the drawing ----------------------------------------------------------- */
-  .plot-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; row-gap: 8px; }
-  .map-wrap { position: relative; }
-  #mapNote {
-    position: absolute; left: 10px; right: 10px; top: 10px; z-index: 900;
-    background: rgba(7,10,14,.9); border: 1px solid var(--line-hi); border-radius: 10px;
-    padding: 9px 11px; font: 400 11px var(--fb); line-height: 1.5; color: var(--ink-2);
-  }
-  #here {
-    position: absolute; right: 10px; bottom: 10px; z-index: 900;
-    height: 40px; padding: 0 14px; border-radius: 11px; border: 1px solid var(--line-hi);
-    background: rgba(7,10,14,.88); color: var(--ink); font: 600 12px var(--fh);
-    display: flex; align-items: center; gap: 7px;
-  }
-  #map { height: 320px; border-radius: 12px; margin-top: 12px; background: var(--bg-deep); z-index: 0; }
+  /* map ------------------------------------------------------------------- */
+  .map-wrap { position: relative; flex: 1 1 auto; min-height: 190px; margin: 0 var(--pad);
+              border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: var(--bg-deep); }
+  #map { position: absolute; inset: 0; z-index: 0; }
   .leaflet-container { font-family: var(--fb); background: var(--bg-deep); }
-  .leaflet-control-attribution { background: rgba(7,10,14,.78) !important; color: var(--ink-4) !important; font-size: 9px !important; }
+  .leaflet-control-attribution { background: rgba(7,10,14,.75) !important; color: var(--ink-4) !important; font-size: 8.5px !important; }
   .leaflet-control-attribution a { color: var(--ink-3) !important; }
-  .leaflet-control-scale-line { background: rgba(7,10,14,.7); border-color: var(--ink-2); color: var(--ink); font: 500 10px var(--fb); }
+  .leaflet-control-scale-line { background: rgba(7,10,14,.72); border-color: var(--ink-2); color: var(--ink); font: 500 10px var(--fb); }
   .leaflet-bar a { background: var(--surface-hi); color: var(--ink-2); border-color: var(--line); }
-  .leaflet-bar a:hover { background: var(--line); color: var(--ink); }
-  .segmented { display: flex; gap: 6px; }
-  .seg { height: 28px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--line-hi); background: transparent; color: var(--ink-3); font: 500 11px var(--fh); cursor: pointer; }
+  .truth-pin { display: block; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%;
+               border: 3px solid #FFB020; background: rgba(11,15,20,.55); box-sizing: border-box; }
+
+  .ov { position: absolute; z-index: 900; }
+  .segmented { top: 9px; right: 9px; display: flex; gap: 5px; }
+  .seg { height: 30px; padding: 0 11px; border-radius: 9px; border: 1px solid var(--line-hi);
+         background: rgba(7,10,14,.82); color: var(--ink-3); font: 500 11px var(--fh); }
   .seg[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg-deep); }
-  .truth-pin { display: block; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; border: 3px solid #FFB020; background: rgba(11,15,20,.6); box-sizing: border-box; }
-  .legend { display: flex; gap: 16px; margin-top: 11px; flex-wrap: wrap; }
-  .legend div { display: flex; align-items: center; gap: 7px; font: 400 11px var(--fb); color: var(--ink-3); }
-  .swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  #here { right: 9px; bottom: 9px; height: 38px; padding: 0 13px; border-radius: 11px;
+          border: 1px solid var(--line-hi); background: rgba(7,10,14,.86); color: var(--ink);
+          font: 600 12px var(--fh); display: flex; align-items: center; gap: 6px; }
+  #mapNote { left: 9px; right: 9px; top: 46px; background: rgba(7,10,14,.92); border: 1px solid var(--line-hi);
+             border-radius: 10px; padding: 8px 10px; font: 400 11px var(--fb); line-height: 1.45; color: var(--ink-2); }
+  #tapHint { left: 9px; bottom: 9px; max-width: 55%; background: rgba(7,10,14,.86); border: 1px solid var(--line-hi);
+             border-radius: 10px; padding: 7px 10px; font: 400 10.5px var(--fb); line-height: 1.4; color: var(--ink-3); }
 
   /* stats ----------------------------------------------------------------- */
-  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line); border-radius: 12px; overflow: hidden; margin-top: 12px; }
-  .stat { background: var(--surface-hi); padding: 12px 13px; display: flex; flex-direction: column; gap: 5px; }
-  .stat dt { font: 400 10.5px var(--fb); color: var(--ink-3); }
-  .stat dd { margin: 0; font: 600 17px var(--fh); font-variant-numeric: tabular-nums; }
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px;
+           background: var(--line); margin: 9px var(--pad) 0; border-radius: 12px; overflow: hidden; flex: 0 0 auto; }
+  .stat { background: var(--surface-hi); padding: 8px 9px; min-width: 0; }
+  .stat dt { font: 400 9px var(--fb); color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat dd { margin: 3px 0 0; font: 600 15px var(--fh); font-variant-numeric: tabular-nums;
+             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   dl { margin: 0; }
 
-  /* compass --------------------------------------------------------------- */
-  .compass-row { display: flex; align-items: center; gap: 16px; margin-top: 12px; }
-  .rose { width: 74px; height: 74px; flex-shrink: 0; }
-  .compass-txt { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-  .compass-txt b { font: 700 26px var(--fh); font-variant-numeric: tabular-nums; }
-  .compass-txt span { font: 400 11.5px var(--fb); color: var(--ink-3); line-height: 1.5; }
-
-  /* log ------------------------------------------------------------------- */
-  .log {
-    margin-top: 12px; max-height: 190px; overflow: auto; border-radius: 10px;
-    border: 1px solid var(--line); background: var(--bg-deep); padding: 10px 12px;
-    font: 400 11px var(--fm); color: var(--ink-2); line-height: 1.7; white-space: pre;
-  }
-  .log b { color: var(--accent); font-weight: 500; }
-  textarea {
-    width: 100%; margin-top: 10px; height: 74px; resize: vertical;
-    background: var(--bg-deep); color: var(--ink-3); border: 1px solid var(--line);
-    border-radius: 10px; padding: 9px 11px; font: 400 10.5px var(--fm); line-height: 1.6;
-  }
-
-  /* controls -------------------------------------------------------------- */
-  .bar { position: sticky; bottom: 0; padding: 14px 0 max(14px, env(safe-area-inset-bottom)); background: linear-gradient(0deg, var(--bg) 62%, transparent); display: flex; gap: 9px; }
-  button {
-    font-family: var(--fh); cursor: pointer; border-radius: 14px; border: 1px solid var(--line-hi);
-    background: transparent; color: var(--ink-2); font-size: 13px; font-weight: 500;
-  }
-  .primary { flex: 1 1 auto; height: 56px; border: 0; background: var(--accent); color: var(--bg-deep); font-weight: 700; font-size: 14.5px; letter-spacing: .05em; }
+  /* action bar ------------------------------------------------------------ */
+  .bar { display: flex; gap: 8px; padding: 10px var(--pad) max(10px, env(safe-area-inset-bottom)); flex: 0 0 auto; }
+  button { font-family: var(--fh); cursor: pointer; border-radius: 13px; border: 1px solid var(--line-hi);
+           background: transparent; color: var(--ink-2); font-size: 12.5px; font-weight: 500; }
+  .primary { flex: 1 1 auto; height: 52px; border: 0; background: var(--accent); color: var(--bg-deep);
+             font-weight: 700; font-size: 14px; letter-spacing: .05em; }
   .primary.stop { background: var(--bad); color: #1A0B0A; }
-  .ghost { flex: 0 0 auto; height: 56px; padding: 0 18px; }
+  .ghost { flex: 0 0 auto; height: 52px; padding: 0 16px; }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  button:disabled { opacity: .45; cursor: not-allowed; }
 
-  .note { font: 400 11.5px var(--fb); color: var(--ink-4); line-height: 1.6; text-wrap: pretty; }
-  .alert { border-color: color-mix(in srgb, var(--bad) 40%, transparent); background: color-mix(in srgb, var(--bad) 8%, var(--surface)); }
-  .alert .label { color: var(--bad); }
-  .diag { font: 400 11px var(--fm); color: var(--ink-4); line-height: 1.8; margin-top: 10px; }
+  /* sheet ----------------------------------------------------------------- */
+  .sheet { position: fixed; inset: 0; z-index: 2000; background: var(--bg);
+           display: flex; flex-direction: column; padding-top: env(safe-area-inset-top);
+           transform: translateY(100%); transition: transform .22s ease; }
+  .sheet.open { transform: none; }
+  @media (prefers-reduced-motion: reduce) { .sheet { transition: none; } }
+  .sheet-head { display: flex; align-items: center; gap: 10px; padding: 12px var(--pad); flex: 0 0 auto; }
+  .sheet-head h2 { font: 700 15px var(--fh); margin: 0; flex-grow: 1; }
+  .sheet-body { flex: 1 1 auto; overflow-y: auto; padding: 0 var(--pad) max(16px, env(safe-area-inset-bottom));
+                display: flex; flex-direction: column; gap: 12px; }
+  .sheet-body > * { min-width: 0; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 13px; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line);
+           border-radius: 11px; overflow: hidden; margin-top: 10px; }
+  .grid2 .stat { padding: 10px 11px; }
+  .grid2 .stat dd { font-size: 16px; }
+  .note { font: 400 11px var(--fb); color: var(--ink-4); line-height: 1.55; margin: 10px 0 0; text-wrap: pretty; }
+  .compass-row { display: flex; align-items: center; gap: 14px; margin-top: 10px; }
+  .rose { width: 62px; height: 62px; flex-shrink: 0; }
+  .hdg { font: 700 22px var(--fh); font-variant-numeric: tabular-nums; }
+  .log { margin-top: 10px; max-height: 200px; overflow: auto; border-radius: 9px; border: 1px solid var(--line);
+         background: var(--bg-deep); padding: 9px 10px; font: 400 10.5px var(--fm); color: var(--ink-2);
+         line-height: 1.65; white-space: pre; }
+  .log b { color: var(--accent); font-weight: 500; }
+  textarea { width: 100%; margin-top: 9px; height: 62px; background: var(--bg-deep); color: var(--ink-3);
+             border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font: 400 10px var(--fm); line-height: 1.55; }
+  .wide { width: 100%; height: 42px; margin-top: 8px; }
+  .diag { font: 400 10.5px var(--fm); color: var(--ink-4); line-height: 1.75; margin-top: 8px; white-space: pre-wrap; }
   .diag span { color: var(--ink-2); }
+  .alert { border-color: color-mix(in srgb, var(--bad) 40%, transparent); background: color-mix(in srgb, var(--bad) 9%, var(--surface)); }
+  .alert .label { color: var(--bad); }
   [hidden] { display: none !important; }
 </style>
 
-<div class="wrap">
-  <header>
-    <span class="mark" aria-hidden="true">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11Z"/><circle cx="12" cy="10" r="2.4"/></svg>
-    </span>
-    <span class="titles">
-      <h1>Točnost na terenu</h1>
-      <span class="sub">Stani kraj hrpe, pokreni mjerenje i pusti ga minutu. Mjeri koliko telefon stvarno promašuje na ovom mjestu.</span>
-    </span>
-  </header>
+<header>
+  <span class="mark" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11Z"/><circle cx="12" cy="10" r="2.4"/></svg>
+  </span>
+  <h1>Točnost na terenu</h1>
+  <span class="srcpill"><i id="dotSrc"></i><span id="src">nema fixa</span></span>
+</header>
 
-  <section class="card" id="blocked" hidden>
-    <div class="label">nema pristupa lokaciji</div>
-    <p class="note" id="blockedText" style="margin:10px 0 0;"></p>
-  </section>
+<div class="live">
+  <span class="acc" id="acc">—</span>
+  <span class="unit">m</span>
+  <span class="verdict">
+    <b id="verdictTitle" style="color:var(--ink-3)">mirno</b>
+    <span id="verdictSub">pritisni Pokreni</span>
+  </span>
+</div>
 
-  <section class="card">
-    <div class="label">očitanje</div>
-    <div class="reading">
-      <span class="acc" id="acc">—</span>
-      <span class="acc-unit">m</span>
-      <span class="verdict">
-        <b id="verdictTitle" style="color:var(--ink-3)">mirno</b>
-        <span id="verdictSub">mjerenje nije pokrenuto</span>
-      </span>
-    </div>
-    <div class="strip">
-      <span class="pill"><i id="dotSrc"></i><span id="src">izvor nepoznat</span></span>
-      <span class="pill" id="pillFix">0 očitanja</span>
-      <span class="pill" id="pillTime">0 s</span>
-    </div>
-  </section>
+<div class="map-wrap">
+  <div id="map"></div>
+  <div class="ov segmented">
+    <button class="seg" id="segSat" aria-pressed="true">Satelit</button>
+    <button class="seg" id="segMap" aria-pressed="false">Karta</button>
+  </div>
+  <div class="ov" id="mapNote" hidden></div>
+  <div class="ov" id="tapHint">Dodirni gdje stvarno stojiš — ugao, rub asfalta, stup.</div>
+  <button class="ov" id="here" type="button">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.4"/><path d="M12 2v3.4M12 18.6V22M22 12h-3.4M5.4 12H2"/></svg>
+    Gdje sam
+  </button>
+</div>
 
-  <section class="card">
-    <div class="plot-head">
-      <span class="label">gdje si</span>
-      <span class="segmented">
-        <button class="seg" id="segSat" aria-pressed="true">Satelit</button>
-        <button class="seg" id="segMap" aria-pressed="false">Karta</button>
-      </span>
-    </div>
-    <div class="map-wrap">
-      <div id="map"></div>
-      <div id="mapNote" hidden></div>
-      <button id="here" type="button">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.4"/><path d="M12 2v3.4M12 18.6V22M22 12h-3.4M5.4 12H2"/></svg>
-        Gdje sam
-      </button>
-    </div>
-    <div class="legend">
-      <div><span class="swatch" style="background:color-mix(in srgb,var(--accent) 28%,transparent);border:1px solid var(--accent)"></span>krug točnosti</div>
-      <div><span class="swatch" style="background:var(--good);border-radius:50%"></span>očitanja</div>
-      <div><span class="swatch" style="border:3px solid var(--accent);border-radius:50%;background:transparent"></span>prava točka</div>
-    </div>
-    <p class="note" style="margin:11px 0 0;" id="truthHint">Dodirni na slici mjesto na kojem stvarno stojiš — neki ugao, rub asfalta, stup. Stranica onda mjeri koliko je telefon od toga promašio.</p>
-  </section>
+<dl class="stats">
+  <div class="stat"><dt>rasipanje</dt><dd id="sSpread">—</dd></div>
+  <div class="stat"><dt>odmak</dt><dd id="sOff">—</dd></div>
+  <div class="stat"><dt>najbolje</dt><dd id="sBest">—</dd></div>
+  <div class="stat"><dt>očitanja</dt><dd id="sN">0</dd></div>
+</dl>
 
-  <section class="card">
-    <div class="label">sesija</div>
-    <dl class="grid">
-      <div class="stat"><dt>prvo očitanje</dt><dd id="sFirst">—</dd></div>
-      <div class="stat"><dt>najbolja točnost</dt><dd id="sBest">—</dd></div>
-      <div class="stat"><dt>do ≤ 20 m</dt><dd id="s20">—</dd></div>
-      <div class="stat"><dt>do ≤ 10 m</dt><dd id="s10">—</dd></div>
-      <div class="stat"><dt>stvarno rasipanje</dt><dd id="sSpread">—</dd></div>
-      <div class="stat"><dt>mrežnih očitanja</dt><dd id="sNet">—</dd></div>
-      <div class="stat"><dt>odmak od prave točke</dt><dd id="sOff">—</dd></div>
-      <div class="stat"><dt>najveći odmak</dt><dd id="sOffMax">—</dd></div>
-    </dl>
-    <p class="note" style="margin:12px 0 0;">Rasipanje je najveća udaljenost pojedinog očitanja od prosjeka dok stojiš na mjestu — mjeri koliko je očitanje nemirno. Odmak je nešto drugo: udaljenost do točke koju si sama označila na slici, dakle koliko telefon stvarno griješi. Nemiran može biti i točan, i obrnuto.</p>
-  </section>
+<div class="bar">
+  <button class="primary" id="run">POKRENI MJERENJE</button>
+  <button class="ghost" id="more">Više</button>
+</div>
 
-  <section class="card">
-    <div class="label">kompas</div>
-    <div class="compass-row">
-      <svg class="rose" viewBox="0 0 100 100" aria-hidden="true">
-        <circle cx="50" cy="50" r="46" fill="none" stroke="#1B242E" stroke-width="2"/>
-        <circle cx="50" cy="50" r="34" fill="none" stroke="#141D26" stroke-width="1"/>
-        <g id="needle" style="transform-origin:50px 50px">
-          <polygon points="50,12 57,52 50,46 43,52" fill="#E8A33C"/>
-          <polygon points="50,88 43,48 50,54 57,48" fill="#2E3A45"/>
-        </g>
-        <circle cx="50" cy="50" r="3.5" fill="#0B0F14" stroke="#5E6D7A" stroke-width="1.5"/>
-      </svg>
-      <span class="compass-txt">
-        <b id="hdg">—</b>
-        <span id="hdgNote">Kompas nije pokrenut. Na iPhoneu traži dopuštenje posebno.</span>
-      </span>
-    </div>
-    <button class="ghost" id="compassBtn" style="width:100%;height:46px;margin-top:12px;">Uključi kompas</button>
-  </section>
+<div class="sheet" id="sheet" aria-hidden="true">
+  <div class="sheet-head">
+    <h2>Detalji</h2>
+    <button class="ghost" id="closeSheet" style="height:38px;padding:0 14px;">Zatvori</button>
+  </div>
+  <div class="sheet-body">
+    <section class="card alert" id="blocked" hidden>
+      <div class="label">nema pristupa lokaciji</div>
+      <p class="note" id="blockedText" style="color:var(--ink-2)"></p>
+    </section>
 
-  <section class="card">
-    <div class="label">sirovi zapis</div>
-    <div class="log" id="log">Zapis je prazan.</div>
-    <textarea id="csv" readonly aria-label="Podaci za kopiranje">t,lat,lon,acc_m,alt,izvor
+    <section class="card">
+      <div class="label">sesija</div>
+      <dl class="grid2">
+        <div class="stat"><dt>prvo očitanje</dt><dd id="sFirst">—</dd></div>
+        <div class="stat"><dt>najbolja točnost</dt><dd id="sBest2">—</dd></div>
+        <div class="stat"><dt>do ≤ 20 m</dt><dd id="s20">—</dd></div>
+        <div class="stat"><dt>do ≤ 10 m</dt><dd id="s10">—</dd></div>
+        <div class="stat"><dt>stvarno rasipanje</dt><dd id="sSpread2">—</dd></div>
+        <div class="stat"><dt>mrežnih očitanja</dt><dd id="sNet">—</dd></div>
+        <div class="stat"><dt>odmak od prave točke</dt><dd id="sOff2">—</dd></div>
+        <div class="stat"><dt>najveći odmak</dt><dd id="sOffMax">—</dd></div>
+      </dl>
+      <p class="note">Rasipanje je najveća udaljenost očitanja od prosjeka dok stojiš na mjestu — koliko je očitanje nemirno. Odmak je udaljenost do točke koju si sama označila na snimci — koliko je krivo. Nemiran može biti točan, i obrnuto.</p>
+    </section>
+
+    <section class="card">
+      <div class="label">kompas</div>
+      <div class="compass-row">
+        <svg class="rose" viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="46" fill="none" stroke="#1B242E" stroke-width="2"/>
+          <circle cx="50" cy="50" r="34" fill="none" stroke="#141D26" stroke-width="1"/>
+          <g id="needle" style="transform-origin:50px 50px">
+            <polygon points="50,12 57,52 50,46 43,52" fill="#E8A33C"/>
+            <polygon points="50,88 43,48 50,54 57,48" fill="#2E3A45"/>
+          </g>
+          <circle cx="50" cy="50" r="3.5" fill="#0B0F14" stroke="#5E6D7A" stroke-width="1.5"/>
+        </svg>
+        <span style="min-width:0">
+          <span class="hdg" id="hdg">—</span>
+          <p class="note" id="hdgNote" style="margin-top:4px">Nije pokrenut. Na iPhoneu traži dopuštenje posebno.</p>
+        </span>
+      </div>
+      <button class="ghost wide" id="compassBtn">Uključi kompas</button>
+    </section>
+
+    <section class="card">
+      <div class="label">sirovi zapis</div>
+      <div class="log" id="log">Zapis je prazan.</div>
+      <textarea id="csv" readonly aria-label="Podaci za kopiranje">t_s,lat,lon,acc_m,alt_m,izvor
 </textarea>
-    <button class="ghost" id="copyBtn" style="width:100%;height:44px;margin-top:8px;">Kopiraj podatke</button>
-  </section>
+      <button class="ghost wide" id="copyBtn">Kopiraj podatke</button>
+      <button class="ghost wide" id="reset">Poništi mjerenje</button>
+    </section>
 
-  <section class="card">
-    <div class="label">okolina</div>
-    <div class="diag" id="diag"></div>
-  </section>
-
-  <p class="note">Ovo je mjerni alat, ne prijava otpada. Ništa se nikamo ne šalje — sve ostaje u ovoj kartici i nestane kad je zatvoriš.</p>
-
-  <div class="bar">
-    <button class="primary" id="run">POKRENI MJERENJE</button>
-    <button class="ghost" id="reset">Poništi</button>
+    <section class="card">
+      <div class="label">okolina</div>
+      <div class="diag" id="diag"></div>
+      <p class="note">Ništa se nikamo ne šalje. Sve nestane kad zatvoriš karticu.</p>
+    </section>
   </div>
 </div>
 
@@ -265,88 +239,64 @@
 
   var fixes = [], watchId = null, t0 = 0, tick = null, wake = null;
   var marks = { first: null, m20: null, m10: null };
+  var map = null, layerSat = null, layerOsm = null;
+  var accCircle = null, fixDots = [], truth = null, truthMarker = null, truthRing = null;
+  var follow = true, hereDot = null, tileErrs = 0, tilesOk = false;
 
-  function metres(a, b, c, d) {                       // lat1, lon1, lat2, lon2
+  function metres(a, b, c, d) {
     var dx = rad(d - b) * Math.cos(rad((a + c) / 2)) * R;
     var dy = rad(c - a) * R;
     return Math.hypot(dx, dy);
   }
-
   function centroid() {
     var la = 0, lo = 0;
     fixes.forEach(function (f) { la += f.lat; lo += f.lon; });
     return [la / fixes.length, lo / fixes.length];
   }
-
   function spread() {
     if (fixes.length < 2) return null;
     var c = centroid(), max = 0;
     fixes.forEach(function (f) { max = Math.max(max, metres(c[0], c[1], f.lat, f.lon)); });
     return max;
   }
-
-  // A network fix has no altitude and a wide radius; there is no API that says so outright.
-  function source(f) { return (f.alt === null || f.acc > 100) ? 'mreža' : 'satelit'; }
-
-  function band(acc) {
-    if (acc <= 10) return { c: 'var(--good)', t: 'dobro', s: 'dovoljno za česticu u polju' };
-    if (acc <= 25) return { c: 'var(--warn)', t: 'granično', s: 'nađe se, ali ne imenuje česticu' };
-    return { c: 'var(--bad)', t: 'loše', s: 'krug pokriva pola ulice' };
+  function offset() {
+    var last = fixes[fixes.length - 1];
+    return (truth && last) ? metres(truth.lat, truth.lon, last.lat, last.lon) : null;
   }
-
-  var fmt = function (m) { return m >= 100 ? Math.round(m) : m.toFixed(1); };
+  function offsetMax() {
+    if (!truth || !fixes.length) return null;
+    return fixes.reduce(function (m, f) { return Math.max(m, metres(truth.lat, truth.lon, f.lat, f.lon)); }, 0);
+  }
+  // A network fix carries no altitude and a wide radius; no API states it outright.
+  function source(f) { return (f.alt === null || f.acc > 100) ? 'mreža' : 'satelit'; }
+  function band(a) {
+    if (a <= 10) return { c: 'var(--good)', t: 'dobro', s: 'dovoljno za česticu' };
+    if (a <= 25) return { c: 'var(--warn)', t: 'granično', s: 'nađe se, ne imenuje' };
+    return { c: 'var(--bad)', t: 'loše', s: 'krug preko pola ulice' };
+  }
+  var fmt = function (m) { return m >= 100 ? String(Math.round(m)) : m.toFixed(1); };
   var secs = function (ms) { return (ms / 1000).toFixed(1) + ' s'; };
 
   /* ---------- map -------------------------------------------------------- */
-  var map = null, layerSat = null, layerOsm = null;
-  var accCircle = null, fixDots = [], truth = null, truthMarker = null, truthRing = null;
-  var follow = true, hereDot = null, tileErrs = 0, tilesOk = false;
-
   function mapNote(t) { var el = $('mapNote'); el.textContent = t || ''; el.hidden = !t; }
 
   function watchTiles(layer) {
     layer.on('tileerror', function () {
       tileErrs += 1;
-      if (!tilesOk && tileErrs === 5) {
-        mapNote('Snimka se ne učitava — ili nema mreže, ili je izvor blokiran. Mjerenje, krug i točke svejedno rade, samo je pozadina prazna.');
-      }
+      if (!tilesOk && tileErrs === 5) mapNote('Snimka se ne učitava — nema mreže ili je izvor blokiran. Mjerenje i krug svejedno rade.');
     });
-    layer.on('tileload', function () { tilesOk = true; mapNote(''); });
-  }
-
-  // Find her the moment the page opens, before any measuring starts.
-  function locateOnce() {
-    if (!navigator.geolocation || !map) return;
-    mapNote('Tražim gdje si…');
-    navigator.geolocation.getCurrentPosition(function (p) {
-      if (!map) return;
-      var la = p.coords.latitude, lo = p.coords.longitude;
-      if (!hereDot) {
-        hereDot = L.circleMarker([la, lo], { radius: 6, color: '#E8EDF2', weight: 2, fillColor: '#3FC98C', fillOpacity: .9 }).addTo(map);
-      } else { hereDot.setLatLng([la, lo]); }
-      if (!fixes.length) map.setView([la, lo], 18, { animate: false });
-      // clear only our own "looking for you" note; a tile failure keeps its message
-      if ($('mapNote').textContent.indexOf('Tražim') === 0) mapNote('');
-    }, function (e) {
-      mapNote(e.code === 1
-        ? 'Lokacija nije dopuštena, pa karta ne zna gdje si. Dopusti lokaciju za ovu stranicu pa pritisni „Gdje sam”.'
-        : 'Još nema položaja. Izađi na otvoreno pa pritisni „Gdje sam”.');
-    }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+    layer.on('tileload', function () { tilesOk = true; if (!$('mapNote').hidden) mapNote(''); });
   }
 
   function initMap() {
     if (map) return;
-    if (typeof L === 'undefined') {
-      mapNote('Karta se nije učitala (biblioteka je blokirana na ovoj mreži). Brojke i zapis i dalje rade.');
-      return;
-    }
-    map = L.map('map', { zoomControl: true, attributionControl: true }).setView([43.7350, 15.8952], 15);
+    if (typeof L === 'undefined') { mapNote('Karta se nije učitala (biblioteka blokirana na ovoj mreži). Brojke i zapis rade.'); return; }
+    map = L.map('map', { zoomControl: false, attributionControl: true }).setView([43.7350, 15.8952], 15);
+    L.control.zoom({ position: 'topleft' }).addTo(map);
     layerSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19, attribution: 'Esri, Maxar, Earthstar Geographics'
     }).addTo(map);
-    layerOsm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, attribution: '&copy; OpenStreetMap'
-    });
+    layerOsm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' });
     watchTiles(layerSat); watchTiles(layerOsm);
     L.control.scale({ metric: true, imperial: false, position: 'bottomleft' }).addTo(map);
     map.on('dragstart', function () { follow = false; });
@@ -357,23 +307,27 @@
     truth = { lat: lat, lon: lon };
     if (truthMarker) map.removeLayer(truthMarker);
     if (truthRing) map.removeLayer(truthRing);
-    truthMarker = L.marker([lat, lon], {
-      icon: L.divIcon({ className: '', html: '<span class="truth-pin"></span>', iconSize: [0, 0] })
-    }).addTo(map);
+    truthMarker = L.marker([lat, lon], { icon: L.divIcon({ className: '', html: '<span class="truth-pin"></span>', iconSize: [0, 0] }) }).addTo(map);
     truthRing = L.polyline([], { color: '#FFB020', weight: 1.5, dashArray: '5 5' }).addTo(map);
-    $('truthHint').textContent = 'Prava točka je postavljena. Dodirni drugdje da je pomakneš.';
+    $('tapHint').textContent = 'Prava točka postavljena. Dodirni drugdje da je pomakneš.';
     render();
   }
 
-  function offset() {
-    var last = fixes[fixes.length - 1];
-    if (!truth || !last) return null;
-    return metres(truth.lat, truth.lon, last.lat, last.lon);
-  }
-
-  function offsetMax() {
-    if (!truth || !fixes.length) return null;
-    return fixes.reduce(function (m, f) { return Math.max(m, metres(truth.lat, truth.lon, f.lat, f.lon)); }, 0);
+  function locateOnce() {
+    if (!navigator.geolocation || !map) return;
+    mapNote('Tražim gdje si…');
+    navigator.geolocation.getCurrentPosition(function (p) {
+      if (!map) return;
+      var la = p.coords.latitude, lo = p.coords.longitude;
+      if (!hereDot) hereDot = L.circleMarker([la, lo], { radius: 6, color: '#E8EDF2', weight: 2, fillColor: '#3FC98C', fillOpacity: .9 }).addTo(map);
+      else hereDot.setLatLng([la, lo]);
+      if (!fixes.length) map.setView([la, lo], 18, { animate: false });
+      if ($('mapNote').textContent.indexOf('Tražim') === 0) mapNote('');
+    }, function (e) {
+      mapNote(e.code === 1
+        ? 'Lokacija nije dopuštena, pa karta ne zna gdje si. Dopusti je za ovu stranicu pa pritisni „Gdje sam”.'
+        : 'Još nema položaja. Izađi na otvoreno pa pritisni „Gdje sam”.');
+    }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
   }
 
   function drawMap() {
@@ -381,27 +335,18 @@
     if (!map) return;
     var last = fixes[fixes.length - 1];
     if (!last) return;
+    if (!accCircle) accCircle = L.circle([last.lat, last.lon], { radius: last.acc, color: '#FFB020', weight: 1.5, fillColor: '#FFB020', fillOpacity: .14 }).addTo(map);
+    else accCircle.setLatLng([last.lat, last.lon]).setRadius(last.acc);
 
-    if (!accCircle) {
-      accCircle = L.circle([last.lat, last.lon], { radius: last.acc, color: '#FFB020', weight: 1.5, fillColor: '#FFB020', fillOpacity: .14 }).addTo(map);
-    } else {
-      accCircle.setLatLng([last.lat, last.lon]).setRadius(last.acc);
-    }
-
-    // one dot per fix; the newest is brighter
     while (fixDots.length < fixes.length) {
       var f = fixes[fixDots.length];
-      fixDots.push(L.circleMarker([f.lat, f.lon], {
-        radius: 3.5, color: '#3FC98C', weight: 1, fillColor: '#3FC98C', fillOpacity: .55
-      }).addTo(map));
+      fixDots.push(L.circleMarker([f.lat, f.lon], { radius: 3.5, color: '#3FC98C', weight: 1, fillColor: '#3FC98C', fillOpacity: .5 }).addTo(map));
     }
     fixDots.forEach(function (d, i) {
-      d.setStyle({ fillOpacity: i >= fixDots.length - 6 ? .95 : .3, radius: i === fixDots.length - 1 ? 5 : 3.5 });
+      d.setStyle({ fillOpacity: i >= fixDots.length - 6 ? .95 : .28, radius: i === fixDots.length - 1 ? 5 : 3.5 });
     });
-
     if (hereDot) { map.removeLayer(hereDot); hereDot = null; }
     if (truthRing && truth) truthRing.setLatLngs([[truth.lat, truth.lon], [last.lat, last.lon]]);
-
     if (follow) {
       var z = last.acc > 60 ? 16 : last.acc > 25 ? 17 : 18;
       map.setView([last.lat, last.lon], Math.max(map.getZoom(), z), { animate: false });
@@ -416,54 +361,48 @@
     if (truthRing) truthRing.setLatLngs([]);
   }
 
-  /* ---------- rendering -------------------------------------------------- */
+  /* ---------- render ----------------------------------------------------- */
   function render() {
     var last = fixes[fixes.length - 1];
     if (last) {
-      var b = band(last.acc);
+      var b = band(last.acc), s = source(last);
       $('acc').textContent = fmt(last.acc);
       $('acc').style.color = b.c;
       $('verdictTitle').textContent = b.t;
       $('verdictTitle').style.color = b.c;
       $('verdictSub').textContent = b.s;
-      var s = source(last);
-      $('src').textContent = s === 'mreža' ? 'vjerojatno mrežni fix' : 'satelitski fix';
+      $('src').textContent = s === 'mreža' ? 'mrežni fix' : 'satelitski';
       $('dotSrc').style.background = s === 'mreža' ? 'var(--bad)' : 'var(--good)';
     }
-    $('pillFix').textContent = fixes.length + (fixes.length === 1 ? ' očitanje' : (fixes.length < 5 ? ' očitanja' : ' očitanja'));
-    $('pillTime').textContent = t0 ? Math.round((Date.now() - t0) / 1000) + ' s' : '0 s';
+    var sp = spread(), off = offset(), offm = offsetMax();
+    var best = fixes.length ? fixes.reduce(function (m, f) { return Math.min(m, f.acc); }, Infinity) : null;
 
+    $('sSpread').textContent = $('sSpread2').textContent = sp == null ? '—' : fmt(sp) + ' m';
+    $('sOff').textContent = $('sOff2').textContent = off == null ? '—' : fmt(off) + ' m';
+    $('sBest').textContent = $('sBest2').textContent = best == null ? '—' : fmt(best) + ' m';
+    $('sN').textContent = String(fixes.length);
+    $('sOffMax').textContent = offm == null ? '—' : fmt(offm) + ' m';
     $('sFirst').textContent = marks.first == null ? '—' : secs(marks.first);
     $('s20').textContent = marks.m20 == null ? (fixes.length ? 'još ne' : '—') : secs(marks.m20);
     $('s10').textContent = marks.m10 == null ? (fixes.length ? 'još ne' : '—') : secs(marks.m10);
-    var best = fixes.reduce(function (m, f) { return Math.min(m, f.acc); }, Infinity);
-    $('sBest').textContent = fixes.length ? '± ' + fmt(best) + ' m' : '—';
-    var sp = spread();
-    $('sSpread').textContent = sp == null ? '—' : fmt(sp) + ' m';
     var net = fixes.filter(function (f) { return source(f) === 'mreža'; }).length;
     $('sNet').textContent = fixes.length ? net + ' / ' + fixes.length : '—';
 
     var lines = fixes.slice(-40).map(function (f) {
-      return '<b>' + String(Math.round(f.t / 1000)).padStart(3, ' ') + 's</b>  ±'
-        + String(fmt(f.acc)).padStart(6, ' ') + ' m   ' + f.lat.toFixed(6) + ', ' + f.lon.toFixed(6)
-        + '   ' + source(f);
+      return '<b>' + String(Math.round(f.t / 1000)).padStart(3, ' ') + 's</b>  ±' + String(fmt(f.acc)).padStart(6, ' ')
+        + ' m  ' + f.lat.toFixed(6) + ', ' + f.lon.toFixed(6) + '  ' + source(f);
     });
     $('log').innerHTML = lines.length ? lines.join('\n') : 'Zapis je prazan.';
     $('log').scrollTop = $('log').scrollHeight;
-
     $('csv').value = 't_s,lat,lon,acc_m,alt_m,izvor\n' + fixes.map(function (f) {
       return [(f.t / 1000).toFixed(1), f.lat.toFixed(7), f.lon.toFixed(7), f.acc.toFixed(1),
         f.alt == null ? '' : f.alt.toFixed(1), source(f)].join(',');
     }).join('\n');
 
-    var off = offset(), offm = offsetMax();
-    $('sOff').textContent = off == null ? '—' : fmt(off) + ' m';
-    $('sOffMax').textContent = offm == null ? '—' : fmt(offm) + ' m';
-
     drawMap();
   }
 
-  /* ---------- the watch -------------------------------------------------- */
+  /* ---------- watch ------------------------------------------------------ */
   function onFix(p) {
     var now = Date.now(), c = p.coords;
     if (marks.first == null) marks.first = now - t0;
@@ -476,26 +415,25 @@
 
   function onErr(e) {
     var msg = {
-      1: 'Pristup lokaciji je odbijen. Ako ova stranica stoji u okviru unutar druge stranice, preglednik lokaciju blokira bez pitanja i tu se ništa ne može — treba je otvoriti kao samostalnu stranicu. Ako nije u okviru, otvori postavke za ovu web-stranicu u pregledniku i vrati Lokaciju na „Pitaj”.',
-      2: 'Položaj trenutno nije dostupan. Izađi na otvoreno i pričekaj — pod krovom i u kanjonu prijamnik ne vidi dovoljno satelita.',
-      3: 'Isteklo je vrijeme čekanja na prvi položaj. Hladni start bez mreže zna trajati i minutu i pol.'
+      1: 'Pristup lokaciji je odbijen. Ako je stranica u okviru unutar druge stranice, preglednik je blokira bez pitanja. Inače u postavkama za ovu stranicu vrati Lokaciju na „Pitaj”.',
+      2: 'Položaj trenutno nije dostupan. Izađi na otvoreno i pričekaj.',
+      3: 'Isteklo je čekanje na prvi položaj. Hladni start bez mreže zna trajati i do minute i pol.'
     }[e.code] || e.message;
     $('blockedText').textContent = msg + '  (kod ' + e.code + ')';
     $('blocked').hidden = false;
+    mapNote(msg);
     stop();
   }
 
   function start() {
     if (!navigator.geolocation) { onErr({ code: 2, message: 'Preglednik nema geolokaciju.' }); return; }
     fixes = []; marks = { first: null, m20: null, m10: null }; t0 = Date.now(); follow = true; clearMap();
-    watchId = navigator.geolocation.watchPosition(onFix, onErr, {
-      enableHighAccuracy: true, maximumAge: 0, timeout: 30000
-    });
-    tick = setInterval(render, 500);
+    watchId = navigator.geolocation.watchPosition(onFix, onErr, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
+    tick = setInterval(render, 600);
     if (navigator.wakeLock) navigator.wakeLock.request('screen').then(function (w) { wake = w; }).catch(function () {});
     $('run').textContent = 'ZAUSTAVI';
     $('run').classList.add('stop');
-    $('verdictSub').textContent = 'čekam prvi položaj…';
+    $('verdictSub').textContent = 'čekam položaj…';
     render();
   }
 
@@ -504,7 +442,7 @@
     watchId = null;
     if (tick) { clearInterval(tick); tick = null; }
     if (wake) { wake.release().catch(function () {}); wake = null; }
-    $('run').textContent = fixes.length ? 'NASTAVI MJERENJE' : 'POKRENI MJERENJE';
+    $('run').textContent = fixes.length ? 'NASTAVI' : 'POKRENI MJERENJE';
     $('run').classList.remove('stop');
   }
 
@@ -513,17 +451,37 @@
     stop(); fixes = []; marks = { first: null, m20: null, m10: null }; t0 = 0; follow = true; clearMap();
     $('acc').textContent = '—'; $('acc').style.color = 'var(--ink)';
     $('verdictTitle').textContent = 'mirno'; $('verdictTitle').style.color = 'var(--ink-3)';
-    $('verdictSub').textContent = 'mjerenje nije pokrenuto';
-    $('src').textContent = 'izvor nepoznat'; $('dotSrc').style.background = 'var(--ink-4)';
-    $('blocked').hidden = true;
-    render();
+    $('verdictSub').textContent = 'pritisni Pokreni';
+    $('src').textContent = 'nema fixa'; $('dotSrc').style.background = 'var(--ink-4)';
+    $('blocked').hidden = true; render();
   });
+
+  /* ---------- sheet ------------------------------------------------------ */
+  function sheet(open) {
+    $('sheet').classList.toggle('open', open);
+    $('sheet').setAttribute('aria-hidden', String(!open));
+    if (!open && map) setTimeout(function () { map.invalidateSize(); }, 240);
+  }
+  $('more').addEventListener('click', function () { sheet(true); });
+  $('closeSheet').addEventListener('click', function () { sheet(false); });
+
+  $('here').addEventListener('click', function () { follow = true; locateOnce(); });
+  $('segSat').addEventListener('click', function () { swap(true); });
+  $('segMap').addEventListener('click', function () { swap(false); });
+  function swap(sat) {
+    initMap();
+    if (!map) return;
+    map.removeLayer(sat ? layerOsm : layerSat);
+    (sat ? layerSat : layerOsm).addTo(map);
+    $('segSat').setAttribute('aria-pressed', String(sat));
+    $('segMap').setAttribute('aria-pressed', String(!sat));
+  }
 
   $('copyBtn').addEventListener('click', function () {
     var ta = $('csv');
     ta.select(); ta.setSelectionRange(0, 99999);
-    var done = function () { $('copyBtn').textContent = 'Kopirano'; setTimeout(function () { $('copyBtn').textContent = 'Kopiraj podatke'; }, 1600); };
-    if (navigator.clipboard) { navigator.clipboard.writeText(ta.value).then(done, function () {}); }
+    var done = function () { $('copyBtn').textContent = 'Kopirano'; setTimeout(function () { $('copyBtn').textContent = 'Kopiraj podatke'; }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(ta.value).then(done, function () {});
     else { try { document.execCommand('copy'); done(); } catch (e) {} }
   });
 
@@ -534,7 +492,7 @@
     if (h == null) return;
     $('hdg').textContent = Math.round(h) + '°';
     $('needle').style.transform = 'rotate(' + (-h) + 'deg)';
-    $('hdgNote').textContent = 'Magnetska deklinacija u Hrvatskoj je oko +4°, pa je pravi sjever za toliko udesno. Zaljuljaj telefon i gledaj koliko brojka pleše — to je pogreška koju nosi „ne mogu prići”.';
+    $('hdgNote').textContent = 'Deklinacija u Hrvatskoj je oko +4°. Zaljuljaj telefon i gledaj koliko brojka pleše — to je pogreška koju nosi procjena s udaljenosti.';
   }
   $('compassBtn').addEventListener('click', function () {
     var D = window.DeviceOrientationEvent;
@@ -547,33 +505,22 @@
     };
     if (typeof D.requestPermission === 'function') {
       D.requestPermission().then(function (r) {
-        if (r === 'granted') attach();
-        else $('hdgNote').textContent = 'Dopuštenje za kompas nije dano.';
+        if (r === 'granted') attach(); else $('hdgNote').textContent = 'Dopuštenje za kompas nije dano.';
       }).catch(function () { $('hdgNote').textContent = 'Dopuštenje za kompas nije dano.'; });
     } else attach();
   });
 
   /* ---------- environment ------------------------------------------------ */
-  var framed = window.self !== window.top;
   $('diag').innerHTML = [
-    'sigurni kontekst   <span>' + (window.isSecureContext ? 'da' : 'ne — geolokacija neće raditi') + '</span>',
-    'unutar okvira      <span>' + (framed ? 'da — ako lokacija bude odbijena, otvori ovaj URL izravno' : 'ne') + '</span>',
-    'geolocation API    <span>' + (navigator.geolocation ? 'ima' : 'nema') + '</span>',
-    'wake lock          <span>' + (navigator.wakeLock ? 'ima' : 'nema') + '</span>'
+    'sigurni kontekst  <span>' + (window.isSecureContext ? 'da' : 'ne — geolokacija neće raditi') + '</span>',
+    'unutar okvira     <span>' + (window.self !== window.top ? 'da — lokacija se blokira' : 'ne') + '</span>',
+    'geolocation       <span>' + (navigator.geolocation ? 'ima' : 'nema') + '</span>',
+    'karta (Leaflet)   <span>' + (typeof L !== 'undefined' ? 'učitana' : 'nije učitana') + '</span>',
+    'wake lock         <span>' + (navigator.wakeLock ? 'ima' : 'nema') + '</span>'
   ].join('\n');
 
-  $('segSat').addEventListener('click', function () { swap(true); });
-  $('segMap').addEventListener('click', function () { swap(false); });
-  function swap(sat) {
-    initMap();
-    if (!map) return;
-    map.removeLayer(sat ? layerOsm : layerSat);
-    (sat ? layerSat : layerOsm).addTo(map);
-    $('segSat').setAttribute('aria-pressed', String(sat));
-    $('segMap').setAttribute('aria-pressed', String(!sat));
-  }
-
-  $('here').addEventListener('click', function () { follow = true; locateOnce(); });
+  window.addEventListener('resize', function () { if (map) map.invalidateSize(); });
+  window.addEventListener('orientationchange', function () { setTimeout(function () { if (map) map.invalidateSize(); }, 300); });
 
   initMap();
   locateOnce();
