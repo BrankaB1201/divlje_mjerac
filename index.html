@@ -120,14 +120,39 @@
   .wide { width: 100%; height: 42px; margin-top: 8px; }
   .diag { font: 400 10.5px var(--fm); color: var(--ink-4); line-height: 1.75; margin-top: 8px; white-space: pre-wrap; }
   .diag span { color: var(--ink-2); }
-  .test { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; }
-  .test:first-of-type { border-top: 0; padding-top: 0; }
-  .t-head { display: flex; align-items: center; gap: 10px; }
-  .t-head b { flex-grow: 1; font: 600 12.5px var(--fh); }
-  .sm { height: 34px; padding: 0 13px; flex: 0 0 auto; font-size: 12px; }
-  .t-out { font: 400 10.5px var(--fm); color: var(--ink-3); line-height: 1.65; margin-top: 7px; white-space: pre-wrap; word-break: break-word; }
-  .t-out.ok { color: var(--good); }
-  .t-out.warn { color: var(--warn); }
+  /* check bench ------------------------------------------------------------ */
+  .bench { display: flex; flex-direction: column; gap: 9px; }
+  .tally { display: flex; align-items: center; gap: 10px; padding: 2px 0 4px; }
+  .tally-bar { flex-grow: 1; height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; display: flex; }
+  .tally-bar i { display: block; height: 100%; }
+  .tally-n { font: 600 11px var(--fh); color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .chk { border: 1px solid var(--line); border-radius: 13px; background: var(--surface-hi); overflow: hidden; }
+  .chk-h { display: flex; align-items: center; gap: 10px; padding: 11px 12px; }
+  .chk-h .st { width: 9px; height: 9px; border-radius: 50%; background: var(--line-hi); flex-shrink: 0; }
+  .chk-h .ttl { flex-grow: 1; min-width: 0; }
+  .chk-h .ttl b { display: block; font: 600 12.5px var(--fh); color: var(--ink); }
+  .chk-h .ttl span { display: block; font: 400 10.5px var(--fb); color: var(--ink-3); margin-top: 2px;
+                     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sm { height: 34px; padding: 0 13px; flex: 0 0 auto; font-size: 11.5px; font-weight: 600; }
+  .chk[data-state="ok"] { border-color: rgba(63,201,140,.32); }
+  .chk[data-state="ok"] .st { background: var(--good); }
+  .chk[data-state="warn"] { border-color: rgba(232,163,60,.34); }
+  .chk[data-state="warn"] .st { background: var(--warn); }
+  .chk[data-state="busy"] .st { background: var(--accent); animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .25; } }
+  @media (prefers-reduced-motion: reduce) { .chk[data-state="busy"] .st { animation: none; } }
+
+  .out { border-top: 1px solid var(--line); padding: 4px 12px 9px; }
+  .out:empty { display: none; }
+  .kv { display: flex; align-items: baseline; gap: 12px; padding: 5px 0; border-bottom: 1px solid rgba(27,36,46,.6); }
+  .kv:last-child { border-bottom: 0; }
+  .kv span { font: 400 11px var(--fb); color: var(--ink-3); flex-grow: 1; min-width: 0; }
+  .kv b { font: 600 12px var(--fh); color: var(--ink); font-variant-numeric: tabular-nums;
+          text-align: right; word-break: break-word; }
+  .kv b.g { color: var(--good); }
+  .kv b.w { color: var(--warn); }
+  .prose { font: 400 11px var(--fb); line-height: 1.55; color: var(--ink-3); padding: 7px 0 2px; text-wrap: pretty; }
   .alert { border-color: color-mix(in srgb, var(--bad) 40%, transparent); background: color-mix(in srgb, var(--bad) 9%, var(--surface)); }
   .alert .label { color: var(--bad); }
   [hidden] { display: none !important; }
@@ -190,58 +215,14 @@
     <section class="card">
       <div class="label">provjere uređaja</div>
 
-      <div class="test">
-        <div class="t-head"><b>Fotoaparat i EXIF</b><button class="ghost sm" id="tCam">Slikaj</button></div>
-        <div class="t-out" id="oCam">Otvori fotoaparat i slikaj bilo što. Mjeri koliko je slika teška, koliko traje od dodira do datoteke, i — najvažnije — nosi li slika GPS u EXIF-u.</div>
-        <input type="file" accept="image/*" capture="environment" id="camIn" hidden>
+      <div class="tally">
+        <div class="tally-bar" id="tallyBar"></div>
+        <span class="tally-n" id="tallyN">0 / 10</span>
       </div>
+      <div class="bench" id="bench"></div>
+      <input type="file" accept="image/*" capture="environment" id="camIn" hidden>
 
-      <div class="test">
-        <div class="t-head"><b>Smanjivanje slike</b><button class="ghost sm" id="tShrink" disabled>Smanji</button></div>
-        <div class="t-out" id="oShrink">Radi na zadnjoj slici. Pokazuje na koliko se spusti i koliko to traje — od toga ovisi je li slanje s terena uopće izvedivo.</div>
-      </div>
-
-      <div class="test">
-        <div class="t-head"><b>Spremnik na telefonu</b><button class="ghost sm" id="tStore">Provjeri</button></div>
-        <div class="t-out" id="oStore">Sprema sliku u bazu preglednika i čita je natrag. Ovo odlučuje može li prijava čekati u redu dok nema signala.</div>
-      </div>
-
-      <div class="test">
-        <div class="t-head"><b>Hladni start</b><button class="ghost sm" id="tCold">Mjeri</button></div>
-        <div class="t-out" id="oCold">Mjeri koliko treba do prvog položaja bez ijednog spremljenog. Isprobaj jednom s podacima, pa jednom u zrakoplovnom načinu — razlika je ono što korisnik čeka na terenu.</div>
-      </div>
-
-      <div class="test">
-        <div class="t-head"><b>Što uređaj ima</b><button class="ghost sm" id="tCaps">Popiši</button></div>
-        <div class="t-out" id="oCaps">Senzori, dopuštenja i mreža.</div>
-      </div>
-
-      <div class="test">
-        <div class="t-head"><b>Radi li u pozadini</b><button class="ghost sm" id="tBgEnd" hidden>Završi</button><button class="ghost sm" id="tBg">Pokreni</button></div>
-        <div class="t-out" id="oBg">Pritisni, pa <b>zaključaj ekran ili prijeđi u drugu aplikaciju na tridesetak sekundi</b> i vrati se. Broji koliko je položaja stiglo dok te nije bilo. Ako je nula, aplikacija ne smije ništa raditi u pozadini.</div>
-      </div>
-
-      <div class="test">
-        <div class="t-head"><b>Sat na telefonu</b><button class="ghost sm" id="tClock">Provjeri</button></div>
-        <div class="t-out" id="oClock">Uspoređuje sat telefona sa satom poslužitelja. Vrijeme snimanja je jedini vremenski dokaz koji prijava ima, pa je bolje znati koliko mu se smije vjerovati.</div>
-      </div>
-
-      <div class="test">
-        <div class="t-head"><b>Brzina veze</b><button class="ghost sm" id="tNet">Izmjeri</button></div>
-        <div class="t-out" id="oNet">Skida oko 0,6 MB i mjeri koliko traje. <b>Troši malo podataka.</b> Odgovara na to hoće li se prijava s tri slike uopće moći poslati s ovog mjesta.</div>
-      </div>
-
-      <div class="test">
-        <div class="t-head"><b>Orijentacija slike</b><button class="ghost sm" id="tOri" disabled>Provjeri</button></div>
-        <div class="t-out" id="oOri">Radi na zadnjoj slici. Fotografije s telefona nose oznaku zakrenutosti; ako se pri smanjivanju izgubi, dokazna slika ispadne postrance.</div>
-      </div>
-
-      <div class="test">
-        <div class="t-head"><b>Slanje van preglednika</b><button class="ghost sm" id="tShare" disabled>Podijeli</button></div>
-        <div class="t-out" id="oShare">Pokušava poslati zadnju sliku s koordinatama kroz izbornik dijeljenja. Ako radi, prva verzija aplikacije može ići bez ijednog poslužitelja — slika i koordinate idu e-poštom inicijativi.</div>
-      </div>
-
-      <button class="ghost wide" id="copyTests">Kopiraj rezultate provjera</button>
+      <button class="ghost wide" id="copyTests" style="margin-top:12px;">Kopiraj sve rezultate</button>
     </section>
 
     <section class="card">
@@ -315,6 +296,7 @@
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
+  function on(id, ev, fn) { var el = $(id); if (el) el.addEventListener(ev, fn); return !!el; }
   var R = 6371008.8, rad = function (d) { return d * Math.PI / 180; };
 
   var fixes = [], watchId = null, t0 = 0, tick = null, wake = null;
@@ -541,8 +523,8 @@
     $('run').classList.remove('stop');
   }
 
-  $('run').addEventListener('click', function () { watchId == null ? start() : stop(); });
-  $('reset').addEventListener('click', function () {
+  on('run', 'click', function () { watchId == null ? start() : stop(); });
+  on('reset', 'click', function () {
     stop(); fixes = []; marks = { first: null, m20: null, m10: null }; t0 = 0; follow = true; clearMap();
     $('acc').textContent = '—'; $('acc').style.color = 'var(--ink)';
     $('verdictTitle').textContent = 'mirno'; $('verdictTitle').style.color = 'var(--ink-3)';
@@ -557,12 +539,12 @@
     $('sheet').setAttribute('aria-hidden', String(!open));
     if (!open && map) setTimeout(function () { map.invalidateSize(); }, 240);
   }
-  $('more').addEventListener('click', function () { sheet(true); });
-  $('closeSheet').addEventListener('click', function () { sheet(false); });
+  on('more', 'click', function () { sheet(true); });
+  on('closeSheet', 'click', function () { sheet(false); });
 
-  $('here').addEventListener('click', function () { follow = true; locateOnce(); });
-  $('segSat').addEventListener('click', function () { swap(true); });
-  $('segMap').addEventListener('click', function () { swap(false); });
+  on('here', 'click', function () { follow = true; locateOnce(); });
+  on('segSat', 'click', function () { swap(true); });
+  on('segMap', 'click', function () { swap(false); });
   function swap(sat) {
     initMap();
     if (!map) return;
@@ -572,7 +554,7 @@
     $('segMap').setAttribute('aria-pressed', String(!sat));
   }
 
-  $('copyBtn').addEventListener('click', function () {
+  on('copyBtn', 'click', function () {
     var ta = $('csv');
     ta.select(); ta.setSelectionRange(0, 99999);
     var done = function () { $('copyBtn').textContent = 'Kopirano'; setTimeout(function () { $('copyBtn').textContent = 'Kopiraj podatke'; }, 1500); };
@@ -583,9 +565,72 @@
 
   /* ---------- device checks ---------------------------------------------- */
   var report = [], lastPhoto = null, lastExif = null, lastDims = null, lastSmall = null;
-  function say(id, text, cls) {
-    var el = $(id); el.textContent = text; el.className = 't-out' + (cls ? ' ' + cls : '');
-    report.push(id.slice(1) + ': ' + text.replace(/\n/g, ' | '));
+
+  var CHECKS = [
+    ['Cam', 'Fotoaparat i EXIF', 'Nosi li slika GPS, koliko je teška', 'Slikaj'],
+    ['Shrink', 'Smanjivanje', 'Na koliko se spusti i za koliko', 'Smanji'],
+    ['Store', 'Spremnik', 'Može li prijava čekati bez signala', 'Provjeri'],
+    ['Cold', 'Hladni start', 'Koliko se čeka prvi položaj', 'Mjeri'],
+    ['Bg', 'Pozadina', 'Radi li išta kad izađeš iz stranice', 'Pokreni'],
+    ['Clock', 'Sat na telefonu', 'Koliko odstupa od mrežnog vremena', 'Provjeri'],
+    ['Net', 'Brzina veze', 'Hoće li se prijava moći poslati odavde', 'Izmjeri'],
+    ['Ori', 'Orijentacija slike', 'Ispada li dokaz postrance', 'Provjeri'],
+    ['Share', 'Dijeljenje', 'Može li prva verzija bez poslužitelja', 'Podijeli'],
+    ['Caps', 'Što uređaj ima', 'Senzori, dopuštenja, ekran', 'Popiši']
+  ];
+  var states = {};
+
+  (function buildBench() {
+    var box = $('bench');
+    CHECKS.forEach(function (c) {
+      var el = document.createElement('article');
+      el.className = 'chk'; el.id = 'c' + c[0]; el.setAttribute('data-state', 'idle');
+      el.innerHTML =
+        '<div class="chk-h"><span class="st"></span>' +
+          '<span class="ttl"><b>' + c[1] + '</b><span>' + c[2] + '</span></span>' +
+          '<button class="ghost sm" id="t' + c[0] + 'End" hidden>Završi</button>' +
+          '<button class="ghost sm" id="t' + c[0] + '">' + c[3] + '</button>' +
+        '</div><div class="out" id="o' + c[0] + '"></div>';
+      box.appendChild(el);
+      states[c[0]] = 'idle';
+    });
+    tally();
+  })();
+
+  function tally() {
+    var ok = 0, warn = 0, done = 0;
+    CHECKS.forEach(function (c) {
+      var st = states[c[0]];
+      if (st === 'ok') { ok += 1; done += 1; }
+      if (st === 'warn') { warn += 1; done += 1; }
+    });
+    var n = CHECKS.length;
+    $('tallyBar').innerHTML =
+      '<i style="width:' + (ok / n * 100) + '%;background:var(--good)"></i>' +
+      '<i style="width:' + (warn / n * 100) + '%;background:var(--warn)"></i>';
+    $('tallyN').textContent = done + ' / ' + n + (warn ? ' · ' + warn + ' pazi' : '');
+  }
+
+  // rows: array of [label, value, tone] — or a string for a plain sentence
+  function res(key, rows, state) {
+    var el = $('o' + key);
+    if (typeof rows === 'string') {
+      el.innerHTML = '<p class="prose">' + rows.replace(/</g, '&lt;') + '</p>';
+      report.push(key + ': ' + rows);
+    } else {
+      el.innerHTML = rows.map(function (r) {
+        var tone = r[2] === 'g' ? ' class="g"' : (r[2] === 'w' ? ' class="w"' : '');
+        return '<div class="kv"><span>' + r[0] + '</span><b' + tone + '>' + String(r[1]).replace(/</g, '&lt;') + '</b></div>';
+      }).join('');
+      report.push(key + ': ' + rows.map(function (r) { return r[0] + ' = ' + r[1]; }).join(' | '));
+    }
+    $('c' + key).setAttribute('data-state', state || 'idle');
+    states[key] = state || 'idle';
+    tally();
+  }
+  function busy(key, msg) {
+    $('o' + key).innerHTML = '<p class="prose">' + msg + '</p>';
+    $('c' + key).setAttribute('data-state', 'busy');
   }
 
   // Walk the JPEG markers to APP1, then the TIFF IFDs, and see whether a GPS
@@ -639,10 +684,10 @@
   }
 
   var camAsked = 0;
-  $('tCam').addEventListener('click', function () { camAsked = performance.now(); $('camIn').click(); });
-  $('camIn').addEventListener('change', function (ev) {
+  on('tCam', 'click', function () { camAsked = performance.now(); $('camIn').click(); });
+  on('camIn', 'change', function (ev) {
     var f = ev.target.files && ev.target.files[0];
-    if (!f) { say('oCam', 'Nije odabrana nijedna slika.', 'warn'); return; }
+    if (!f) { res('Cam', 'Nije odabrana nijedna slika.', 'warn'); return; }
     var dt = Math.round(performance.now() - camAsked);
     lastPhoto = f; $('tShrink').disabled = false; $('tOri').disabled = false;
     $('tShare').disabled = !(navigator.share && navigator.canShare);
@@ -650,25 +695,23 @@
     img.onload = function () {
       f.arrayBuffer().then(function (buf) {
         var e = exifGps(buf);
-        var lines = [
-          'veličina        ' + (f.size / 1048576).toFixed(2) + ' MB',
-          'dimenzije       ' + img.naturalWidth + ' × ' + img.naturalHeight,
-          'vrsta           ' + (f.type || 'nepoznata'),
-          'od dodira       ' + (dt / 1000).toFixed(1) + ' s',
-          'EXIF            ' + (e.exif ? 'ima' : 'nema'),
-          'GPS u EXIF-u    ' + (e.gps ? 'DA  ' + (e.lat != null ? e.lat.toFixed(6) + ', ' + e.lon.toFixed(6) : '(' + e.n + ' polja)') : 'NE'),
-          'vrijeme (IFD0)  ' + (e.dt || 'nema — provjerava se samo IFD0, ne i Exif pod-blok')
-        ];
         lastExif = e; lastDims = [img.naturalWidth, img.naturalHeight];
-        say('oCam', lines.join('\n'), e.gps ? 'ok' : 'warn');
+        res('Cam', [
+          ['veličina', (f.size / 1048576).toFixed(2) + ' MB'],
+          ['dimenzije', img.naturalWidth + ' × ' + img.naturalHeight],
+          ['od dodira do slike', (dt / 1000).toFixed(1) + ' s'],
+          ['EXIF', e.exif ? 'ima' : 'nema'],
+          ['GPS u EXIF-u', e.gps ? (e.lat != null ? e.lat.toFixed(5) + ', ' + e.lon.toFixed(5) : 'ima') : 'NEMA', e.gps ? 'g' : 'w'],
+          ['vrijeme (samo IFD0)', e.dt || '—']
+        ], e.gps ? 'ok' : 'warn');
         URL.revokeObjectURL(url);
       });
     };
-    img.onerror = function () { say('oCam', 'Slika se nije dala pročitati.', 'warn'); };
+    img.onerror = function () { res('Cam', 'Slika se nije dala pročitati.', 'warn'); };
     img.src = url;
   });
 
-  $('tShrink').addEventListener('click', function () {
+  on('tShrink', 'click', function () {
     if (!lastPhoto) return;
     var t = performance.now(), img = new Image(), url = URL.createObjectURL(lastPhoto);
     img.onload = function () {
@@ -679,22 +722,25 @@
       c.toBlob(function (b) {
         lastSmall = b;
         var ms = Math.round(performance.now() - t);
-        say('oShrink', ['iz  ' + (lastPhoto.size / 1048576).toFixed(2) + ' MB  ' + img.naturalWidth + ' × ' + img.naturalHeight,
-          'u   ' + (b.size / 1048576).toFixed(2) + ' MB  ' + c.width + ' × ' + c.height,
-          'traje ' + ms + ' ms',
-          'EXIF nakon smanjivanja: nema (canvas ga ne prenosi)'].join('\n'), 'ok');
+        res('Shrink', [
+          ['iz', (lastPhoto.size / 1048576).toFixed(2) + ' MB · ' + img.naturalWidth + ' × ' + img.naturalHeight],
+          ['u', (b.size / 1048576).toFixed(2) + ' MB · ' + c.width + ' × ' + c.height, 'g'],
+          ['traje', ms + ' ms'],
+          ['prijava s 3 slike', (b.size * 3 / 1048576).toFixed(2) + ' MB'],
+          ['EXIF poslije', 'nema — canvas ga ne prenosi']
+        ], 'ok');
         URL.revokeObjectURL(url);
       }, 'image/jpeg', 0.82);
     };
     img.src = url;
   });
 
-  $('tStore').addEventListener('click', function () {
+  on('tStore', 'click', function () {
     var blob = lastPhoto || new Blob([new Uint8Array(1048576)]);
     var t = performance.now();
     var req = indexedDB.open('mjerac', 1);
     req.onupgradeneeded = function () { req.result.createObjectStore('t'); };
-    req.onerror = function () { say('oStore', 'IndexedDB nije dostupan.', 'warn'); };
+    req.onerror = function () { res('Store', 'Spremnik preglednika nije dostupan — prijava ne bi mogla čekati u redu.', 'warn'); };
     req.onsuccess = function () {
       var db = req.result, tx = db.transaction('t', 'readwrite');
       tx.objectStore('t').put(blob, 'x');
@@ -705,65 +751,68 @@
           var read = Math.round(performance.now() - t2);
           var back = rd.result && rd.result.size === blob.size;
           var fin = function (est) {
-            say('oStore', ['upisano       ' + (blob.size / 1048576).toFixed(2) + ' MB za ' + wrote + ' ms',
-              'pročitano     ' + read + ' ms, ' + (back ? 'ista veličina' : 'NE poklapa se'),
-              'zauzeto       ' + (est ? (est.usage / 1048576).toFixed(1) + ' MB' : '—'),
-              'kvota         ' + (est ? (est.quota / 1073741824).toFixed(2) + ' GB' : '—'),
-              'stane otprilike ' + (est ? Math.floor(est.quota / Math.max(blob.size, 1)) + ' ovakvih' : '—')].join('\n'),
-              back ? 'ok' : 'warn');
+            res('Store', [
+              ['upisano', (blob.size / 1048576).toFixed(2) + ' MB za ' + wrote + ' ms'],
+              ['pročitano', read + ' ms · ' + (back ? 'ista veličina' : 'NE poklapa se'), back ? 'g' : 'w'],
+              ['zauzeto', est ? (est.usage / 1048576).toFixed(1) + ' MB' : '—'],
+              ['kvota', est ? (est.quota / 1073741824).toFixed(2) + ' GB' : '—'],
+              ['stane otprilike', est ? Math.floor(est.quota / Math.max(blob.size, 1)).toLocaleString('hr-HR') + ' slika' : '—']
+            ], back ? 'ok' : 'warn');
             db.close();
           };
           if (navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(fin, function () { fin(null); });
           else fin(null);
         };
       };
-      tx.onerror = function () { say('oStore', 'Upis nije uspio — moguće da je spremnik pun.', 'warn'); db.close(); };
+      tx.onerror = function () { res('Store', 'Upis nije uspio — moguće da je spremnik pun.', 'warn'); db.close(); };
     };
   });
 
-  $('tCold').addEventListener('click', function () {
-    say('oCold', 'Mjerim… (do 90 s)');
+  on('tCold', 'click', function () {
+    busy('Cold', 'Mjerim… može trajati do 90 sekundi.');
     var t = performance.now(), on = navigator.onLine;
     navigator.geolocation.getCurrentPosition(function (p) {
       var ageMs = p.timestamp ? Math.max(0, Date.now() - p.timestamp) : null;
-      say('oCold', ['mreža          ' + (on ? 'ima' : 'NEMA (zrakoplovni)'),
-        'do prvog fixa  ' + ((performance.now() - t) / 1000).toFixed(1) + ' s',
-        'starost fixa   ' + (ageMs == null ? '—' : (ageMs / 1000).toFixed(1) + ' s' + (ageMs > 3000 ? '  ← zadržani, nije svjež' : '')),
-        'točnost        ± ' + p.coords.accuracy.toFixed(1) + ' m',
-        'visina         ' + (p.coords.altitude == null ? 'nema (znak mrežnog fixa)' : p.coords.altitude.toFixed(1) + ' m')].join('\n'), 'ok');
+      var stale = ageMs != null && ageMs > 3000;
+      res('Cold', [
+        ['mreža', on ? 'ima' : 'nema — zrakoplovni'],
+        ['do prvog fixa', ((performance.now() - t) / 1000).toFixed(1) + ' s'],
+        ['starost fixa', ageMs == null ? '—' : (ageMs / 1000).toFixed(1) + ' s' + (stale ? ' · zadržan' : ' · svjež'), stale ? 'w' : 'g'],
+        ['točnost', '± ' + p.coords.accuracy.toFixed(1) + ' m'],
+        ['visina', p.coords.altitude == null ? 'nema — znak mrežnog fixa' : p.coords.altitude.toFixed(1) + ' m']
+      ], stale ? 'warn' : 'ok');
     }, function (e) {
-      say('oCold', 'Nije uspjelo nakon ' + ((performance.now() - t) / 1000).toFixed(1) + ' s (kod ' + e.code + ')', 'warn');
+      res('Cold', 'Nije uspjelo nakon ' + ((performance.now() - t) / 1000).toFixed(1) + ' s (kod ' + e.code + ').', 'warn');
     }, { enableHighAccuracy: true, maximumAge: 0, timeout: 90000 });
   });
 
-  $('tCaps').addEventListener('click', function () {
+  on('tCaps', 'click', function () {
     var D = window.DeviceOrientationEvent;
     var lines = [
-      'mreža          ' + (navigator.onLine ? 'ima' : 'nema'),
-      'vrsta veze     ' + ((navigator.connection && navigator.connection.effectiveType) || '—'),
-      'jezgri         ' + (navigator.hardwareConcurrency || '—'),
-      'memorija       ' + (navigator.deviceMemory ? navigator.deviceMemory + ' GB' : '—'),
-      'ekran          ' + window.innerWidth + ' × ' + window.innerHeight + ' @ ' + (window.devicePixelRatio || 1) + 'x',
-      'orijentacija   ' + (D ? (typeof D.requestPermission === 'function' ? 'traži dopuštenje' : 'bez dopuštenja') : 'nema'),
-      'wake lock      ' + (navigator.wakeLock ? (wake ? 'radi' : 'ima') : 'nema'),
-      'dijeljenje     ' + (navigator.share ? 'ima' : 'nema')
+      ['mreža', navigator.onLine ? 'ima' : 'nema'],
+      ['vrsta veze', (navigator.connection && navigator.connection.effectiveType) || '—'],
+      ['jezgri', String(navigator.hardwareConcurrency || '—')],
+      ['ekran', window.innerWidth + ' × ' + window.innerHeight + ' @ ' + (window.devicePixelRatio || 1) + 'x'],
+      ['kompas', D ? (typeof D.requestPermission === 'function' ? 'traži dopuštenje' : 'bez dopuštenja') : 'nema'],
+      ['wake lock', navigator.wakeLock ? (wake ? 'radi' : 'ima') : 'nema'],
+      ['dijeljenje', navigator.share ? 'ima' : 'nema']
     ];
-    var done = function (extra) { say('oCaps', lines.concat(extra || []).join('\n')); };
+    var done = function (extra) { res('Caps', lines.concat(extra || []), 'ok'); };
     if (navigator.permissions && navigator.permissions.query) {
       navigator.permissions.query({ name: 'geolocation' })
-        .then(function (r) { done(['dopuštenje lok. ' + r.state]); }, function () { done(); });
-    } else done(['dopuštenje lok. nedostupno']);
+        .then(function (r) { done([['dopuštenje lokacije', r.state, r.state === 'granted' ? 'g' : 'w']]); }, function () { done(); });
+    } else done([['dopuštenje lokacije', 'nedostupno']]);
   });
 
 
   // Does anything keep running once she leaves the page? On iOS a backgrounded
   // tab is suspended, which would rule out any "leave it going" design.
   var bg = null;
-  $('tBg').addEventListener('click', function () {
+  on('tBg', 'click', function () {
     if (bg) return;
     bg = { start: Date.now(), hidden: 0, hiddenAt: 0, fixes: 0, hiddenFixes: 0, id: null };
     $('tBg').hidden = true; $('tBgEnd').hidden = false;
-    say('oBg', 'Radi. Zaključaj ekran ili prijeđi u drugu aplikaciju, pa se vrati — pa pritisni Završi.');
+    busy('Bg', 'Radi. Zaključaj ekran ili prijeđi u drugu aplikaciju, pa se vrati i pritisni Završi.');
     bg.id = navigator.geolocation.watchPosition(function () {
       bg.fixes += 1;
       if (document.hidden) bg.hiddenFixes += 1;
@@ -784,77 +833,86 @@
     navigator.geolocation.clearWatch(bg.id);
     document.removeEventListener('visibilitychange', onVis);
     var ok = bg.hiddenFixes > 0;
-    say('oBg', ['izvan ekrana   ' + (bg.hidden / 1000).toFixed(1) + ' s  (' + why + ')',
-      'ukupno fixeva  ' + bg.fixes,
-      'dok si bila van ' + bg.hiddenFixes,
-      ok ? 'zaključak      radi u pozadini' : 'zaključak      NE radi u pozadini — sve staje čim izađeš'].join('\n'), ok ? 'ok' : 'warn');
+    res('Bg', [
+      ['izvan ekrana', (bg.hidden / 1000).toFixed(1) + ' s · ' + why],
+      ['položaja ukupno', String(bg.fixes)],
+      ['dok te nije bilo', String(bg.hiddenFixes), ok ? 'g' : 'w'],
+      ['zaključak', ok ? 'radi u pozadini' : 'staje čim izađeš', ok ? 'g' : 'w']
+    ], ok ? 'ok' : 'warn');
     bg = null;
     $('tBg').hidden = false; $('tBgEnd').hidden = true;
   }
 
-  $('tBgEnd').addEventListener('click', function () { finishBg('ručno zaustavljeno'); });
+  on('tBgEnd', 'click', function () { finishBg('ručno zaustavljeno'); });
 
   // The report's only timestamp is the phone's own, so it is worth knowing
   // how far off it is. Date is a CORS-safelisted header, so this reads.
-  $('tClock').addEventListener('click', function () {
-    say('oClock', 'Provjeravam…');
+  on('tClock', 'click', function () {
+    busy('Clock', 'Provjeravam…');
     var t0 = Date.now();
     fetch(location.href.split('#')[0] + (location.search ? '&' : '?') + '_t=' + t0,
           { method: 'HEAD', cache: 'no-store' }).then(function (r) {
       var t1 = Date.now(), h = r.headers.get('date');
-      if (!h) { say('oClock', 'Poslužitelj nije poslao čitljivo vrijeme (zaglavlje Date nije izloženo).', 'warn'); return; }
+      if (!h) { res('Clock', 'Poslužitelj nije poslao čitljivo vrijeme.', 'warn'); return; }
       var server = new Date(h).getTime(), mid = t0 + (t1 - t0) / 2, off = mid - server;
-      say('oClock', ['sat telefona   ' + new Date(mid).toISOString().slice(11, 19),
-        'sat mreže      ' + new Date(server).toISOString().slice(11, 19),
-        'razlika        ' + (off / 1000).toFixed(1) + ' s' + (Math.abs(off) > 30000 ? '  ← puno' : ''),
-        'mjerna nesig.  ±' + ((t1 - t0) / 2000).toFixed(1) + ' s (put do poslužitelja)'].join('\n'),
-        Math.abs(off) > 30000 ? 'warn' : 'ok');
-    }, function () { say('oClock', 'Nema veze do poslužitelja.', 'warn'); });
+      var bad = Math.abs(off) > 30000;
+      res('Clock', [
+        ['sat telefona', new Date(mid).toISOString().slice(11, 19) + ' UTC'],
+        ['sat mreže', new Date(server).toISOString().slice(11, 19) + ' UTC'],
+        ['razlika', (off / 1000).toFixed(1) + ' s', bad ? 'w' : 'g'],
+        ['nesigurnost mjerenja', '± ' + ((t1 - t0) / 2000).toFixed(1) + ' s']
+      ], bad ? 'warn' : 'ok');
+    }, function () { res('Clock', 'Nema veze do poslužitelja.', 'warn'); });
   });
 
   var BIG = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-  $('tNet').addEventListener('click', function () {
-    say('oNet', 'Skidam…');
+  on('tNet', 'click', function () {
+    busy('Net', 'Skidam oko 0,6 MB…');
     var t = performance.now();
     fetch(BIG, { cache: 'no-store' }).then(function (r) { return r.arrayBuffer(); }).then(function (b) {
       var sec = (performance.now() - t) / 1000, mb = b.byteLength / 1048576;
       var mbit = (b.byteLength * 8 / 1e6) / sec;
       var report15 = 1.5 * 8 / mbit;
-      say('oNet', ['skinuto        ' + mb.toFixed(2) + ' MB za ' + sec.toFixed(1) + ' s',
-        'brzina         ' + mbit.toFixed(1) + ' Mbit/s (skidanje)',
-        'prijava 1,5 MB ' + (report15 < 1 ? 'manje od sekunde' : '~' + report15.toFixed(1) + ' s') + ' da je slanje jednako brzo',
-        'slanje je u pravilu sporije, računaj dvostruko'].join('\n'), mbit > 1 ? 'ok' : 'warn');
-    }, function () { say('oNet', 'Skidanje nije uspjelo — nema veze ili je izvor blokiran.', 'warn'); });
+      res('Net', [
+        ['skinuto', mb.toFixed(2) + ' MB za ' + sec.toFixed(1) + ' s'],
+        ['brzina skidanja', mbit.toFixed(1) + ' Mbit/s', mbit > 1 ? 'g' : 'w'],
+        ['prijava 1,5 MB', report15 < 1 ? 'manje od sekunde' : '~' + report15.toFixed(1) + ' s'],
+        ['stvarno slanje', 'računaj dvostruko — odlazna veza je sporija']
+      ], mbit > 1 ? 'ok' : 'warn');
+    }, function () { res('Net', 'Skidanje nije uspjelo — nema veze ili je izvor blokiran.', 'warn'); });
   });
 
   var ORI = { 1: 'uspravno', 3: 'okrenuto 180°', 6: 'zakrenuto 90° u smjeru kazaljke', 8: 'zakrenuto 90° suprotno' };
-  $('tOri').addEventListener('click', function () {
+  on('tOri', 'click', function () {
     if (!lastExif || !lastDims) return;
     var o = lastExif.ori || 0;
     var portrait = lastDims[1] > lastDims[0];
     var applied = (o === 6 || o === 8) ? portrait : true;
-    say('oOri', ['EXIF oznaka    ' + (o ? o + ' — ' + (ORI[o] || 'ostalo') : 'nema'),
-      'kako je dekodirana ' + lastDims[0] + ' × ' + lastDims[1] + (portrait ? '  (uspravna)' : '  (položena)'),
-      'preglednik ju je ' + (applied ? 'već primijenio' : 'NIJE primijenio — smanjena slika bi ispala postrance'),
-      lastSmall ? 'smanjena kopija ' + (lastSmall.size / 1048576).toFixed(2) + ' MB, bez EXIF-a' : 'smanjena kopija nije napravljena'].join('\n'),
-      applied ? 'ok' : 'warn');
+    res('Ori', [
+      ['EXIF oznaka', o ? o + ' — ' + (ORI[o] || 'ostalo') : 'nema'],
+      ['dekodirana kao', lastDims[0] + ' × ' + lastDims[1] + (portrait ? ' · uspravna' : ' · položena')],
+      ['preglednik primijenio', applied ? 'da' : 'NE — dokaz bi ispao postrance', applied ? 'g' : 'w'],
+      ['smanjena kopija', lastSmall ? (lastSmall.size / 1048576).toFixed(2) + ' MB, bez EXIF-a' : 'nije napravljena']
+    ], applied ? 'ok' : 'warn');
   });
 
-  $('tShare').addEventListener('click', function () {
+  on('tShare', 'click', function () {
     var f = lastSmall ? new File([lastSmall], 'prijava.jpg', { type: 'image/jpeg' }) : lastPhoto;
-    if (!f) { say('oShare', 'Prvo slikaj.', 'warn'); return; }
+    if (!f) { res('Share', 'Prvo slikaj.', 'warn'); return; }
     var last = fixes[fixes.length - 1];
     var txt = 'Divlje — probna prijava\n' + (last ? last.lat.toFixed(6) + ', ' + last.lon.toFixed(6) + '  ±' + last.acc.toFixed(1) + ' m' : 'bez koordinata');
     var data = { files: [f], text: txt, title: 'Divlje' };
-    if (!navigator.canShare || !navigator.canShare(data)) { say('oShare', 'Dijeljenje datoteke nije podržano na ovom pregledniku.', 'warn'); return; }
+    if (!navigator.canShare || !navigator.canShare(data)) { res('Share', 'Dijeljenje datoteke nije podržano na ovom pregledniku.', 'warn'); return; }
     navigator.share(data).then(function () {
-      say('oShare', ['datoteka       ' + (f.size / 1048576).toFixed(2) + ' MB',
-        'tekst          ' + txt.replace('\n', ' · '),
-        'zaključak      radi — v0 može ići bez poslužitelja'].join('\n'), 'ok');
-    }, function (e) { say('oShare', 'Odustala si ili nije uspjelo: ' + (e && e.name ? e.name : ''), 'warn'); });
+      res('Share', [
+        ['datoteka', (f.size / 1048576).toFixed(2) + ' MB'],
+        ['poslano uz nju', last ? last.lat.toFixed(5) + ', ' + last.lon.toFixed(5) + ' ± ' + last.acc.toFixed(0) + ' m' : 'bez koordinata'],
+        ['zaključak', 'radi — prva verzija može bez poslužitelja', 'g']
+      ], 'ok');
+    }, function (e) { res('Share', 'Odustala si ili nije uspjelo.' + (e && e.name ? ' (' + e.name + ')' : ''), 'warn'); });
   });
 
-  $('copyTests').addEventListener('click', function () {
+  on('copyTests', 'click', function () {
     var txt = 'PROVJERE — ' + new Date().toISOString() + '\n' + navigator.userAgent + '\n\n' + report.join('\n');
     var done = function () { $('copyTests').textContent = 'Kopirano'; setTimeout(function () { $('copyTests').textContent = 'Kopiraj rezultate provjera'; }, 1500); };
     if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done, function () {});
@@ -869,7 +927,7 @@
     $('needle').style.transform = 'rotate(' + (-h) + 'deg)';
     $('hdgNote').textContent = 'Deklinacija u Hrvatskoj je oko +4°. Zaljuljaj telefon i gledaj koliko brojka pleše — to je pogreška koju nosi procjena s udaljenosti.';
   }
-  $('compassBtn').addEventListener('click', function () {
+  on('compassBtn', 'click', function () {
     var D = window.DeviceOrientationEvent;
     if (!D) { $('hdgNote').textContent = 'Ovaj preglednik ne daje orijentaciju uređaja.'; return; }
     var attach = function () {
