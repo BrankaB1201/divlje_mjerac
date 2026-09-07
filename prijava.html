@@ -26,15 +26,16 @@
     height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
     padding-top: env(safe-area-inset-top);
   }
-  .label { font: 500 9.5px var(--fb); letter-spacing: .17em; text-transform: uppercase; color: var(--ink-3); }
 
+  /* chrome ----------------------------------------------------------------- */
   header { display: flex; align-items: center; gap: 10px; padding: 10px var(--pad) 0; flex: 0 0 auto; }
   .mark { width: 28px; height: 28px; border-radius: 9px; flex-shrink: 0; background: var(--accent);
           color: var(--bg-deep); display: flex; align-items: center; justify-content: center; }
-  .brand { font: 700 15px var(--fh); letter-spacing: .05em; flex-grow: 1; }
-  .gps { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 13px;
-         border: 1px solid var(--line-hi); font: 500 10.5px var(--fb); color: var(--ink-3); white-space: nowrap; }
-  .gps i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-4); }
+  .brand { font: 700 15px var(--fh); letter-spacing: .06em; flex-grow: 1; }
+  .gps { display: inline-flex; align-items: center; gap: 6px; height: 27px; padding: 0 11px; border-radius: 14px;
+         border: 1px solid var(--line-hi); font: 600 11px var(--fh); color: var(--ink-2);
+         white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .gps i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-4); flex-shrink: 0; }
 
   nav { display: flex; gap: 6px; padding: 10px var(--pad); flex: 0 0 auto; }
   .tab { flex: 1 1 0; height: 40px; border-radius: 11px; border: 1px solid var(--line); background: var(--surface);
@@ -42,50 +43,86 @@
   .tab[aria-selected="true"] { background: var(--surface-hi); border-color: var(--line-hi); color: var(--ink); }
   .tab b { color: var(--accent); }
 
-  main { flex: 1 1 auto; overflow-y: auto; padding: 0 var(--pad) 8px;
-         display: flex; flex-direction: column; gap: 14px; }
+  main { flex: 1 1 auto; overflow-y: auto; padding: 0 var(--pad) 10px;
+         display: flex; flex-direction: column; gap: 18px; }
   main > * { flex-shrink: 0; min-width: 0; }
   main[hidden] { display: none; }
 
+  /* a step says what is still needed, so the number is information ---------- */
+  .step { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
+  .step .n { width: 19px; height: 19px; border-radius: 50%; flex-shrink: 0;
+             border: 1px solid var(--line-hi); color: var(--ink-3);
+             font: 700 10px var(--fh); display: flex; align-items: center; justify-content: center; }
+  .step b { font: 600 12px var(--fh); color: var(--ink-2); letter-spacing: .02em; }
+  .step .opt { font: 400 10.5px var(--fb); color: var(--ink-4); margin-left: auto; }
+  .step[data-done="1"] .n { background: var(--good); border-color: var(--good); color: var(--bg-deep); }
+  .step[data-done="1"] b { color: var(--ink); }
+
   /* photo ------------------------------------------------------------------ */
-  .shot { position: relative; width: 100%; aspect-ratio: 4 / 3; min-height: 200px; border-radius: 16px; overflow: hidden;
-          border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, transparent);
-          background: color-mix(in srgb, var(--accent) 6%, var(--bg-deep));
-          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px;
-          color: var(--accent); cursor: pointer; padding: 0; font-family: var(--fh); }
+  .shot { position: relative; width: 100%; aspect-ratio: 4 / 3; min-height: 210px; border-radius: 18px;
+          overflow: hidden; cursor: pointer; display: flex; flex-direction: column;
+          align-items: center; justify-content: center; gap: 10px; padding: 0;
+          border: 1.5px dashed color-mix(in srgb, var(--accent) 42%, transparent);
+          background: radial-gradient(120% 90% at 50% 8%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%), var(--bg-deep);
+          color: var(--accent); }
   .shot.has { border: 1px solid var(--line-hi); background: var(--bg-deep); }
   .shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .shot .cap { font: 600 13px var(--fh); }
-  .shot .sub { font: 400 11px var(--fb); color: var(--ink-3); max-width: 76%; text-align: center; line-height: 1.45; }
-  .retake { position: absolute; right: 10px; bottom: 10px; height: 36px; padding: 0 13px; border-radius: 11px;
-            border: 1px solid var(--line-hi); background: rgba(7,10,14,.86); color: var(--ink); font: 600 11.5px var(--fh); }
+  .shot .cap { font: 700 15px var(--fh); letter-spacing: .02em; }
+  .shot .sub { font: 400 11.5px var(--fb); color: var(--ink-3); max-width: 74%; text-align: center; line-height: 1.5; }
+  .stamp { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 13px 11px;
+           background: linear-gradient(0deg, rgba(7,10,14,.94), transparent);
+           display: flex; align-items: flex-end; gap: 10px; }
+  .stamp-t { flex-grow: 1; min-width: 0; }
+  .stamp-t b { display: block; font: 600 12.5px var(--fh); font-variant-numeric: tabular-nums; }
+  .stamp-t span { display: block; font: 400 10.5px var(--fb); color: var(--ink-3); margin-top: 2px; }
+  .retake { flex-shrink: 0; height: 34px; padding: 0 13px; border-radius: 11px; border: 1px solid var(--line-hi);
+            background: rgba(7,10,14,.9); color: var(--ink); font: 600 11.5px var(--fh); }
 
-  /* location --------------------------------------------------------------- */
-  .card { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden; }
-  #map { height: 170px; background: var(--bg-deep); }
-  .loc { display: flex; align-items: center; gap: 10px; padding: 11px 13px; }
-  .loc-main { flex-grow: 1; min-width: 0; }
-  .loc-main b { display: block; font: 600 13px var(--fh); }
-  .loc-main span { font: 400 10.5px var(--fb); color: var(--ink-3); }
-  .badge { flex-shrink: 0; height: 26px; padding: 0 10px; border-radius: 13px; font: 600 10.5px var(--fh);
-           display: inline-flex; align-items: center; }
+  /* map -------------------------------------------------------------------- */
+  .mapwrap { position: relative; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--surface); }
+  #map { height: 178px; background: var(--bg-deep); }
+  .leaflet-container { font-family: var(--fb); background: var(--bg-deep); }
+  .leaflet-control-attribution { background: rgba(7,10,14,.7) !important; color: var(--ink-4) !important; font-size: 8px !important; }
+  .leaflet-control-scale-line { background: rgba(7,10,14,.7); border-color: var(--ink-2); color: var(--ink); font: 500 9.5px var(--fb); }
+  .badge { position: absolute; right: 9px; top: 9px; z-index: 500; height: 26px; padding: 0 11px; border-radius: 13px;
+           font: 700 10px var(--fh); letter-spacing: .1em; display: inline-flex; align-items: center;
+           background: rgba(7,10,14,.86); }
+  .tapme { position: absolute; left: 9px; bottom: 9px; z-index: 500; max-width: 62%; padding: 7px 10px;
+           border-radius: 10px; background: rgba(7,10,14,.86); border: 1px solid var(--line-hi);
+           font: 400 10.5px var(--fb); color: var(--ink-3); line-height: 1.4; }
+  .locbar { display: flex; align-items: center; gap: 10px; padding: 11px 13px; border-top: 1px solid var(--line); }
+  .locbar b { font: 600 12.5px var(--fh); font-variant-numeric: tabular-nums; }
+  .locbar span { display: block; font: 400 10.5px var(--fb); color: var(--ink-3); margin-top: 2px; }
 
   /* chips ------------------------------------------------------------------ */
-  .chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
-  .chip { height: 52px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface);
+  .chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .chip { height: 58px; border-radius: 13px; border: 1px solid var(--line); background: var(--surface);
           color: var(--ink-3); font: 500 11.5px var(--fb); cursor: pointer; padding: 0 6px;
-          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
-  .chip .dot { width: 9px; height: 9px; border-radius: 50%; }
-  .chip[aria-pressed="true"] { color: var(--ink); }
-  .chips3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .chips3 .chip { height: 44px; }
+          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  .chip .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .sizes .chip { height: 46px; font-size: 12px; }
 
-  textarea { width: 100%; height: 82px; background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+  textarea { width: 100%; height: 86px; background: var(--surface); color: var(--ink); border: 1px solid var(--line);
              border-radius: 14px; padding: 12px 13px; font: 400 13px var(--fb); line-height: 1.5; resize: none; }
   textarea::placeholder { color: var(--ink-4); }
+  .note { font: 400 11.5px var(--fb); color: var(--ink-4); line-height: 1.55; text-wrap: pretty; margin: 0; }
 
-  .bar { display: flex; gap: 8px; padding: 10px var(--pad) max(10px, env(safe-area-inset-bottom)); flex: 0 0 auto;
-         border-top: 1px solid var(--line); background: var(--bg); }
+  .jump { display: flex; align-items: center; gap: 11px; padding: 13px 14px; border: 1px solid var(--line);
+          border-radius: 14px; text-decoration: none; background: var(--surface); }
+  .jump-i { width: 28px; height: 28px; border-radius: 9px; background: var(--surface-hi); border: 1px solid var(--line-hi);
+            color: var(--ink-3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .jump b { display: block; font: 600 12.5px var(--fh); color: var(--ink); }
+  .jump span { font: 400 10.5px var(--fb); color: var(--ink-3); }
+
+  /* action bar ------------------------------------------------------------- */
+  .foot { flex: 0 0 auto; border-top: 1px solid var(--line); background: var(--bg);
+          padding: 9px var(--pad) max(10px, env(safe-area-inset-bottom)); }
+  .ready { display: flex; gap: 14px; justify-content: center; padding-bottom: 9px; }
+  .ready div { display: flex; align-items: center; gap: 6px; font: 500 10.5px var(--fb); color: var(--ink-4); }
+  .ready i { width: 7px; height: 7px; border-radius: 50%; background: var(--line-hi); }
+  .ready div[data-on="1"] { color: var(--ink-2); }
+  .ready div[data-on="1"] i { background: var(--good); }
+  .bar { display: flex; gap: 8px; }
   button { font-family: var(--fh); cursor: pointer; border-radius: 13px; border: 1px solid var(--line-hi);
            background: transparent; color: var(--ink-2); font-size: 12.5px; font-weight: 500; }
   .primary { flex: 1 1 auto; height: 54px; border: 0; background: var(--accent); color: var(--bg-deep);
@@ -94,19 +131,24 @@
   .primary:disabled { background: #161F28; color: var(--ink-4); cursor: not-allowed; }
   .ghost { flex: 0 0 auto; height: 54px; padding: 0 16px; }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .hint { text-align: center; font: 400 11px var(--fb); color: var(--ink-3); padding: 0 var(--pad) 6px; }
 
   /* list ------------------------------------------------------------------- */
-  .row { display: flex; gap: 12px; padding: 11px; border: 1px solid var(--line); border-radius: 14px;
-         background: var(--surface); align-items: center; text-align: left; width: 100%; cursor: pointer; }
-  .row img { width: 58px; height: 58px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--bg-deep); }
-  .row-main { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-  .row-t { display: flex; align-items: center; gap: 7px; font: 600 13px var(--fh); }
-  .row-s { font: 400 10.5px var(--fb); color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .empty { text-align: center; color: var(--ink-3); font: 400 12.5px var(--fb); line-height: 1.6;
-           padding: 34px 20px; border: 1px dashed var(--line-hi); border-radius: 16px; text-wrap: pretty; }
-  .note { font: 400 11.5px var(--fb); color: var(--ink-4); line-height: 1.55; text-wrap: pretty; margin: 0; }
-  a { color: var(--ink-3); }
+  .sum { display: flex; align-items: center; gap: 10px; padding: 2px 0 2px; }
+  .sum b { font: 700 20px var(--fh); font-variant-numeric: tabular-nums; }
+  .sum span { font: 400 11.5px var(--fb); color: var(--ink-3); line-height: 1.4; }
+  .row { position: relative; display: flex; gap: 12px; padding: 11px 12px 11px 15px; border: 1px solid var(--line);
+         border-radius: 15px; background: var(--surface); align-items: center; text-align: left; width: 100%;
+         cursor: pointer; overflow: hidden; }
+  .row .edge { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+  .row img { width: 60px; height: 60px; border-radius: 11px; object-fit: cover; flex-shrink: 0; background: var(--bg-deep); }
+  .row-main { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .row-t { font: 600 13.5px var(--fh); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-s { font: 400 10.5px var(--fb); color: var(--ink-3); font-variant-numeric: tabular-nums;
+           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pill { flex-shrink: 0; height: 25px; padding: 0 10px; border-radius: 13px; font: 700 9.5px var(--fh);
+          letter-spacing: .1em; display: inline-flex; align-items: center; }
+  .empty { text-align: center; color: var(--ink-3); font: 400 12.5px var(--fb); line-height: 1.65;
+           padding: 40px 22px; border: 1px dashed var(--line-hi); border-radius: 18px; text-wrap: pretty; }
   [hidden] { display: none !important; }
 </style>
 
@@ -115,7 +157,7 @@
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11Z"/><circle cx="12" cy="10" r="2.4"/></svg>
   </span>
   <span class="brand">DIVLJE</span>
-  <span class="gps"><i id="gpsDot"></i><span id="gpsTxt">tražim signal…</span></span>
+  <span class="gps"><i id="gpsDot"></i><span id="gpsTxt">tražim…</span></span>
 </header>
 
 <nav>
@@ -124,76 +166,88 @@
 </nav>
 
 <main id="viewNew">
-  <div class="shot" id="shot" role="button" tabindex="0" aria-label="Slikaj otpad">
-    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.6A2 2 0 0 1 5 6.6h1.6a1 1 0 0 0 .8-.4l1-1.3a1 1 0 0 1 .8-.4h5.6a1 1 0 0 1 .8.4l1 1.3a1 1 0 0 0 .8.4H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><circle cx="12" cy="12.8" r="3.3"/></svg>
-    <span class="cap">Slikaj otpad</span>
-    <span class="sub">Položaj se uzima u trenutku okidanja, ne iz slike — telefon ga u sliku ne upisuje.</span>
-    <button class="retake" id="retake" type="button" hidden>Slikaj ponovo</button>
+  <div>
+    <div class="step" id="st1" data-done="0"><span class="n">1</span><b>Fotografija</b><span class="opt">obavezno</span></div>
+    <div class="shot" id="shot" role="button" tabindex="0" aria-label="Slikaj otpad">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.6A2 2 0 0 1 5 6.6h1.6a1 1 0 0 0 .8-.4l1-1.3a1 1 0 0 1 .8-.4h5.6a1 1 0 0 1 .8.4l1 1.3a1 1 0 0 0 .8.4H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><circle cx="12" cy="12.8" r="3.3"/></svg>
+      <span class="cap">Slikaj otpad</span>
+      <span class="sub">Položaj se hvata u trenutku okidanja — telefon ga u sliku ne upisuje.</span>
+      <div class="stamp" id="stamp" hidden>
+        <span class="stamp-t"><b id="stampCoord">—</b><span id="stampMeta">—</span></span>
+        <button class="retake" id="retake" type="button">Ponovo</button>
+      </div>
+    </div>
+    <input type="file" accept="image/*" capture="environment" id="camIn" hidden>
   </div>
-  <input type="file" accept="image/*" capture="environment" id="camIn" hidden>
 
   <div>
-    <div class="label" style="margin-bottom:8px;">gdje</div>
-    <div class="card">
+    <div class="step" id="st2" data-done="0"><span class="n">2</span><b>Gdje leži</b><span class="opt">ispravi ako treba</span></div>
+    <div class="mapwrap">
       <div id="map"></div>
-      <div class="loc">
-        <span class="loc-main">
+      <span class="badge" id="locBadge" style="color:var(--ink-3);border:1px solid var(--line-hi)">ČEKAM</span>
+      <span class="tapme" id="tapme">Dodirni snimku gdje otpad stvarno leži</span>
+      <div class="locbar">
+        <span style="flex-grow:1;min-width:0">
           <b id="locCoord">—</b>
           <span id="locMeta">čekam položaj</span>
         </span>
-        <span class="badge" id="locBadge" style="border:1px solid var(--line-hi);color:var(--ink-3)">—</span>
       </div>
     </div>
-    <p class="note" style="margin-top:8px;">Ako točka nije na pravom mjestu, <b>dodirni kartu</b> gdje otpad stvarno leži. Zapisuje se i koliko si je pomaknula.</p>
   </div>
 
   <div>
-    <div class="label" style="margin-bottom:8px;">što je</div>
+    <div class="step" id="st3" data-done="0"><span class="n">3</span><b>Što je</b><span class="opt">obavezno</span></div>
     <div class="chips" id="types"></div>
   </div>
 
   <div>
-    <div class="label" style="margin-bottom:8px;">koliko ima</div>
-    <div class="chips chips3" id="sizes"></div>
+    <div class="step" id="st4" data-done="0"><span class="n">4</span><b>Koliko ima</b><span class="opt">neobavezno</span></div>
+    <div class="chips sizes" id="sizes"></div>
   </div>
 
   <div>
-    <div class="label" style="margin-bottom:8px;">opis</div>
+    <div class="step" id="st5" data-done="0"><span class="n">5</span><b>Opis</b><span class="opt">neobavezno</span></div>
     <textarea id="note" placeholder="Što se vidi, otkad stoji, kako se prilazi…"></textarea>
   </div>
 
-  <a href="./index.html" style="display:flex;align-items:center;gap:11px;padding:13px 14px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink-2);background:var(--surface);">
-    <span style="width:28px;height:28px;border-radius:9px;background:var(--surface-hi);border:1px solid var(--line-hi);color:var(--ink-3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.4"/><path d="M12 2v3.4M12 18.6V22M22 12h-3.4M5.4 12H2"/></svg>
-    </span>
-    <span style="flex-grow:1;min-width:0;">
-      <span style="display:block;font:600 12.5px var(--fh);color:var(--ink);">Mjerač točnosti i provjere uređaja</span>
-      <span style="font:400 10.5px var(--fb);color:var(--ink-3);">Svi testovi su ondje, pod „Više"</span>
-    </span>
+  <a class="jump" href="./index.html">
+    <span class="jump-i"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.4"/><path d="M12 2v3.4M12 18.6V22M22 12h-3.4M5.4 12H2"/></svg></span>
+    <span style="flex-grow:1;min-width:0"><b>Mjerač i provjere uređaja</b><span>Svi testovi su ondje, pod „Više”</span></span>
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
   </a>
 
-  <p class="note">Prijava se prvo sprema na telefon. Slanje ide preko izbornika dijeljenja — odabereš e-poštu inicijative i ode slika s koordinatama. Bez signala čeka u redu.</p>
+  <p class="note">Prijava se prvo sprema na telefon, pa se nudi na slanje kroz izbornik dijeljenja — odabereš e-poštu inicijative i ode slika s koordinatama. Bez signala čeka u redu.</p>
 </main>
 
 <main id="viewList" hidden>
-  <div id="rows" style="display:flex;flex-direction:column;gap:9px;"></div>
-  <p class="note" id="listFoot" hidden>Prijave stoje na ovom telefonu. Ako ovu stranicu ne otvoriš tjedan dana, iOS ih smije obrisati.</p>
+  <div class="sum" id="sum" hidden>
+    <b id="sumN">0</b>
+    <span id="sumT"></span>
+  </div>
+  <div id="rows" style="display:flex;flex-direction:column;gap:10px;"></div>
+  <p class="note" id="listFoot" hidden>Prijave stoje na ovom telefonu. Ako ovu stranicu ne otvoriš tjedan dana, iOS ih smije obrisati. Dodaj je na početni zaslon pa je to manje vjerojatno.</p>
 </main>
 
-<div class="hint" id="hint">Treba fotografija i vrsta otpada.</div>
-<div class="bar">
-  <button class="primary" id="send" disabled>
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3.5L14.2 21l-2.6-7.6L4 10.8 21 3.5Z"/></svg>
-    <span id="sendTxt">SPREMI I POŠALJI</span>
-  </button>
-  <button class="ghost" id="clear">Očisti</button>
+<div class="foot" id="foot">
+  <div class="ready">
+    <div id="rd1"><i></i>slika</div>
+    <div id="rd2"><i></i>vrsta</div>
+    <div id="rd3"><i></i>lokacija</div>
+  </div>
+  <div class="bar">
+    <button class="primary" id="send" disabled>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3.5L14.2 21l-2.6-7.6L4 10.8 21 3.5Z"/></svg>
+      <span>SPREMI I POŠALJI</span>
+    </button>
+    <button class="ghost" id="clear">Očisti</button>
+  </div>
 </div>
 
 <script>
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
+  function on(id, ev, fn) { var el = $(id); if (el) el.addEventListener(ev, fn); return !!el; }
   var R = 6371008.8, rad = function (d) { return d * Math.PI / 180; };
   function metres(a, b, c, d) {
     var dx = rad(d - b) * Math.cos(rad((a + c) / 2)) * R, dy = rad(c - a) * R;
@@ -206,10 +260,9 @@
   ];
   var SIZES = [['v', 'Vreća-dvije'], ['p', 'Prikolica'], ['k', 'Kamion i više']];
 
-  /* ---------- state ------------------------------------------------------- */
-  var live = null;          // best fix the receiver has given us so far
+  var live = null;
   var draft = { photo: null, url: null, fix: null, moved: 0, types: {}, size: '' };
-  var db = null, rows = [];
+  var db = null;
 
   /* ---------- store ------------------------------------------------------- */
   function open() {
@@ -232,19 +285,21 @@
       var out = [], c = db.transaction('prijave').objectStore('prijave').openCursor();
       c.onsuccess = function (e) {
         var cur = e.target.result;
-        if (cur) { out.push(cur.value); cur.continue(); } else { res(out.sort(function (a, b) { return b.ts - a.ts; })); }
+        if (cur) { out.push(cur.value); cur.continue(); }
+        else { res(out.sort(function (a, b) { return b.ts - a.ts; })); }
       };
     });
   }
 
-  /* ---------- location ---------------------------------------------------- */
+  /* ---------- map --------------------------------------------------------- */
   var map = null, dot = null, ring = null;
   function initMap() {
     if (map) return;
     if (typeof L === 'undefined') {
-      $('map').innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;'
-        + 'padding:0 20px;text-align:center;font:400 11.5px var(--fb);color:var(--ink-3);line-height:1.5">'
-        + 'Karta se nije učitala. Koordinate se svejedno bilježe, samo se točka ne može ispraviti rukom.</div>';
+      $('map').innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;padding:0 22px;'
+        + 'text-align:center;font:400 11.5px var(--fb);color:var(--ink-3);line-height:1.5">Karta se nije učitala. '
+        + 'Koordinate se svejedno bilježe, samo se točka ne može ispraviti rukom.</div>';
+      $('tapme').hidden = true;
       return;
     }
     map = L.map('map', { zoomControl: false, attributionControl: true }).setView([43.7350, 15.8952], 15);
@@ -252,61 +307,72 @@
       { maxZoom: 19, attribution: 'Esri' }).addTo(map);
     L.control.scale({ metric: true, imperial: false }).addTo(map);
     map.on('click', function (e) {
-      if (!draft.fix) return;
+      var base = draft.fix || live;
+      if (!base) return;
+      if (!draft.fix) draft.fix = { lat0: base.lat, lon0: base.lon, acc: base.acc, age: base.age };
       draft.moved = metres(draft.fix.lat0, draft.fix.lon0, e.latlng.lat, e.latlng.lng);
       draft.fix.lat = e.latlng.lat; draft.fix.lon = e.latlng.lng; draft.fix.src = 'ručno';
-      paintFix(); check();
+      $('tapme').textContent = 'Pomaknuto ' + Math.round(draft.moved) + ' m. Dodirni opet da ispraviš.';
+      paint();
     });
   }
-  function paintFix() {
+
+  function paint() {
     var f = draft.fix || live;
     if (!f) return;
-    paintText(f);                       // the numbers must show even if the map never loads
-    if (!map) return;
-    if (!dot) dot = L.circleMarker([f.lat, f.lon], { radius: 6, color: '#E8EDF2', weight: 2, fillColor: '#FFB020', fillOpacity: 1 }).addTo(map);
-    else dot.setLatLng([f.lat, f.lon]);
-    if (!ring) ring = L.circle([f.lat, f.lon], { radius: f.acc, color: '#FFB020', weight: 1.4, fillColor: '#FFB020', fillOpacity: .12 }).addTo(map);
-    else ring.setLatLng([f.lat, f.lon]).setRadius(f.src === 'ručno' ? 3 : f.acc);
-    map.setView([f.lat, f.lon], f.acc > 30 ? 17 : 18, { animate: false });
-  }
-
-  function paintText(f) {
+    var manual = f.src === 'ručno';
     $('locCoord').textContent = f.lat.toFixed(6) + ', ' + f.lon.toFixed(6);
-    var bits = [f.src === 'ručno' ? 'ucrtano rukom, pomak ' + Math.round(draft.moved) + ' m' : 'GNSS ± ' + f.acc.toFixed(1) + ' m'];
-    if (f.age != null && f.src !== 'ručno') bits.push('očitanje staro ' + (f.age / 1000).toFixed(0) + ' s');
+    var bits = [manual ? 'ucrtano rukom · pomak ' + Math.round(draft.moved) + ' m' : 'GNSS ± ' + f.acc.toFixed(1) + ' m'];
+    if (!manual && f.age != null) bits.push('očitanje staro ' + Math.round(f.age / 1000) + ' s');
     $('locMeta').textContent = bits.join(' · ');
-    var b = $('locBadge'), good = f.src === 'ručno' || f.acc <= 15;
-    b.textContent = f.src === 'ručno' ? 'RUČNO' : (f.acc <= 15 ? 'DOBRO' : 'SLABO');
+
+    var good = manual || f.acc <= 15;
+    var b = $('locBadge');
+    b.textContent = manual ? 'RUČNO' : (good ? 'DOBRO' : 'SLABO');
     b.style.color = good ? 'var(--good)' : 'var(--warn)';
-    b.style.border = '1px solid ' + (good ? 'rgba(63,201,140,.4)' : 'rgba(232,163,60,.4)');
+    b.style.border = '1px solid ' + (good ? 'rgba(63,201,140,.45)' : 'rgba(232,163,60,.45)');
+
+    if (map) {
+      if (!dot) dot = L.circleMarker([f.lat, f.lon], { radius: 6, color: '#0B0F14', weight: 2, fillColor: '#FFB020', fillOpacity: 1 }).addTo(map);
+      else dot.setLatLng([f.lat, f.lon]);
+      if (!ring) ring = L.circle([f.lat, f.lon], { radius: f.acc, color: '#FFB020', weight: 1.4, fillColor: '#FFB020', fillOpacity: .12 }).addTo(map);
+      else ring.setLatLng([f.lat, f.lon]).setRadius(manual ? 3 : f.acc);
+      map.setView([f.lat, f.lon], f.acc > 30 ? 17 : 18, { animate: false });
+    }
+    if (draft.photo && draft.fix) {
+      $('stampCoord').textContent = f.lat.toFixed(5) + ', ' + f.lon.toFixed(5);
+      $('stampMeta').textContent = (manual ? 'ucrtano rukom' : '± ' + f.acc.toFixed(0) + ' m') +
+        ' · ' + new Date().toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' });
+    }
+    check();
   }
 
-  navigator.geolocation && navigator.geolocation.watchPosition(function (p) {
-    var c = p.coords;
-    live = { lat: c.latitude, lon: c.longitude, acc: c.accuracy, src: 'gnss',
-             age: p.timestamp ? Math.max(0, Date.now() - p.timestamp) : null };
-    $('gpsDot').style.background = c.accuracy <= 15 ? 'var(--good)' : 'var(--warn)';
-    $('gpsTxt').textContent = '± ' + c.accuracy.toFixed(0) + ' m';
-    if (!draft.fix) { initMap(); paintFix(); }
-  }, function (e) {
-    $('gpsTxt').textContent = e.code === 1 ? 'lokacija odbijena' : 'nema signala';
-    $('gpsDot').style.background = 'var(--bad)';
-  }, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(function (p) {
+      var c = p.coords;
+      live = { lat: c.latitude, lon: c.longitude, acc: c.accuracy, src: 'gnss',
+               age: p.timestamp ? Math.max(0, Date.now() - p.timestamp) : null };
+      $('gpsDot').style.background = c.accuracy <= 15 ? 'var(--good)' : 'var(--warn)';
+      $('gpsTxt').textContent = '± ' + c.accuracy.toFixed(0) + ' m';
+      if (!draft.fix) { initMap(); paint(); }
+    }, function (e) {
+      $('gpsTxt').textContent = e.code === 1 ? 'odbijeno' : 'nema signala';
+      $('gpsDot').style.background = 'var(--bad)';
+      $('locMeta').textContent = e.code === 1
+        ? 'lokacija nije dopuštena za ovu stranicu'
+        : 'nema položaja — prijava može ići i bez njega';
+    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
+  }
 
   /* ---------- photo ------------------------------------------------------- */
-  $('shot').addEventListener('click', function (e) {
-    if (e.target.closest('#retake')) return;
-    $('camIn').click();
-  });
-  $('shot').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('camIn').click(); }
-  });
-  $('retake').addEventListener('click', function (e) { e.stopPropagation(); $('camIn').click(); });
+  on('shot', 'click', function (e) { if (!e.target.closest('#retake')) $('camIn').click(); });
+  on('shot', 'keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('camIn').click(); } });
+  on('retake', 'click', function (e) { e.stopPropagation(); $('camIn').click(); });
 
-  $('camIn').addEventListener('change', function (ev) {
+  on('camIn', 'change', function (ev) {
     var f = ev.target.files && ev.target.files[0];
     if (!f) return;
-    // the fix is frozen at the shutter, because the photo will not carry one
+    // frozen at the shutter, because the photo will not carry one
     draft.fix = live ? { lat: live.lat, lon: live.lon, lat0: live.lat, lon0: live.lon,
                          acc: live.acc, age: live.age, src: 'gnss' } : null;
     draft.moved = 0;
@@ -316,12 +382,14 @@
       draft.url = URL.createObjectURL(blob);
       var el = $('shot');
       el.classList.add('has');
-      var img = el.querySelector('img') || document.createElement('img');
-      img.src = draft.url; if (!img.parentNode) el.insertBefore(img, el.firstChild);
-      el.querySelector('.cap').hidden = true; el.querySelector('.sub').hidden = true;
+      var img = el.querySelector('img');
+      if (!img) { img = document.createElement('img'); img.alt = ''; el.insertBefore(img, el.firstChild); }
+      img.src = draft.url;
+      el.querySelector('.cap').hidden = true;
+      el.querySelector('.sub').hidden = true;
       el.querySelector('svg').style.display = 'none';
-      $('retake').hidden = false;
-      initMap(); paintFix(); check();
+      $('stamp').hidden = false;
+      initMap(); paint();
     });
   });
 
@@ -346,11 +414,12 @@
     b.className = 'chip'; b.type = 'button'; b.setAttribute('aria-pressed', 'false');
     b.innerHTML = '<span class="dot" style="background:' + t[2] + '"></span>' + t[1];
     b.addEventListener('click', function () {
-      if (draft.types[t[0]]) { delete draft.types[t[0]]; } else { draft.types[t[0]] = 1; }
-      var on = !!draft.types[t[0]];
-      b.setAttribute('aria-pressed', String(on));
-      b.style.borderColor = on ? t[2] : 'var(--line)';
-      b.style.background = on ? 'color-mix(in srgb, ' + t[2] + ' 14%, transparent)' : 'var(--surface)';
+      if (draft.types[t[0]]) delete draft.types[t[0]]; else draft.types[t[0]] = 1;
+      var onNow = !!draft.types[t[0]];
+      b.setAttribute('aria-pressed', String(onNow));
+      b.style.borderColor = onNow ? t[2] : 'var(--line)';
+      b.style.background = onNow ? 'color-mix(in srgb, ' + t[2] + ' 16%, transparent)' : 'var(--surface)';
+      b.style.color = onNow ? 'var(--ink)' : 'var(--ink-3)';
       check();
     });
     $('types').appendChild(b);
@@ -361,85 +430,91 @@
     b.addEventListener('click', function () {
       draft.size = draft.size === sz[0] ? '' : sz[0];
       [].forEach.call($('sizes').children, function (c, i) {
-        var on = SIZES[i][0] === draft.size;
-        c.setAttribute('aria-pressed', String(on));
-        c.style.borderColor = on ? 'var(--accent)' : 'var(--line)';
-        c.style.background = on ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--surface)';
+        var onNow = SIZES[i][0] === draft.size;
+        c.setAttribute('aria-pressed', String(onNow));
+        c.style.borderColor = onNow ? 'var(--accent)' : 'var(--line)';
+        c.style.background = onNow ? 'color-mix(in srgb, var(--accent) 14%, transparent)' : 'var(--surface)';
+        c.style.color = onNow ? 'var(--ink)' : 'var(--ink-3)';
       });
       check();
     });
     $('sizes').appendChild(b);
   });
+  on('note', 'input', function () { check(); });
 
   function typeNames(keys) {
     return TYPES.filter(function (t) { return keys.indexOf(t[0]) >= 0; }).map(function (t) { return t[1]; });
   }
+  function step(id, done) { $(id).setAttribute('data-done', done ? '1' : '0'); }
   function check() {
     var keys = Object.keys(draft.types);
-    var ok = !!draft.photo && keys.length > 0;
-    $('send').disabled = !ok;
-    $('hint').textContent = !draft.photo ? 'Treba fotografija.'
-      : (!keys.length ? 'Odaberi barem jednu vrstu otpada.'
-      : (draft.fix ? 'Spremno — ' + typeNames(keys).join(', ') : 'Spremno, ali bez koordinata.'));
+    var hasFix = !!(draft.fix || live);
+    step('st1', !!draft.photo); step('st2', hasFix); step('st3', keys.length);
+    step('st4', !!draft.size); step('st5', !!$('note').value.trim());
+    $('rd1').setAttribute('data-on', draft.photo ? '1' : '0');
+    $('rd2').setAttribute('data-on', keys.length ? '1' : '0');
+    $('rd3').setAttribute('data-on', hasFix ? '1' : '0');
+    $('send').disabled = !(draft.photo && keys.length);
   }
 
   /* ---------- save + share ------------------------------------------------ */
-  $('send').addEventListener('click', function () {
-    var keys = Object.keys(draft.types);
+  on('send', 'click', function () {
+    var keys = Object.keys(draft.types), f = draft.fix || live;
     var rec = {
       id: 'p' + Date.now(), ts: Date.now(), photo: draft.photo,
-      lat: draft.fix ? draft.fix.lat : null, lon: draft.fix ? draft.fix.lon : null,
-      acc: draft.fix ? draft.fix.acc : null, age: draft.fix ? draft.fix.age : null,
-      src: draft.fix ? draft.fix.src : null, moved: Math.round(draft.moved),
+      lat: f ? f.lat : null, lon: f ? f.lon : null, acc: f ? f.acc : null,
+      age: f ? f.age : null, src: f ? (f.src || 'gnss') : null, moved: Math.round(draft.moved),
       types: keys, size: draft.size, note: $('note').value.trim(), status: 'u redu'
     };
     put(rec).then(function () {
-      return share(rec).then(function (sent) {
-        if (sent) { rec.status = 'poslano'; return put(rec); }
-      });
-    }).then(function () {
-      reset(); refresh(); showList();
-    }, function (e) {
-      $('hint').textContent = 'Spremanje nije uspjelo: ' + (e && e.name ? e.name : '');
-    });
+      return share(rec).then(function (sent) { if (sent) { rec.status = 'poslano'; return put(rec); } });
+    }).then(function () { reset(); refresh(); tab(false); });
   });
 
   function textFor(rec) {
+    var size = (SIZES.filter(function (s) { return s[0] === rec.size; })[0] || ['', '—'])[1];
     return ['DIVLJE — prijava divljeg odlagališta', '',
       'Vrsta: ' + typeNames(rec.types).join(', '),
-      'Količina: ' + ((SIZES.filter(function (s) { return s[0] === rec.size; })[0] || ['', '—'])[1]),
+      'Količina: ' + size,
       'Koordinate: ' + (rec.lat == null ? 'nema' : rec.lat.toFixed(6) + ', ' + rec.lon.toFixed(6)),
-      'Točnost: ' + (rec.src === 'ručno' ? 'ucrtano rukom, pomak ' + rec.moved + ' m' : (rec.acc == null ? '—' : '± ' + rec.acc.toFixed(1) + ' m'))
+      'Točnost: ' + (rec.src === 'ručno' ? 'ucrtano rukom, pomak ' + rec.moved + ' m'
+        : (rec.acc == null ? '—' : '± ' + rec.acc.toFixed(1) + ' m'))
         + (rec.age != null && rec.src !== 'ručno' ? ', očitanje staro ' + Math.round(rec.age / 1000) + ' s' : ''),
       'Vrijeme: ' + new Date(rec.ts).toLocaleString('hr-HR'),
       rec.note ? '\nOpis: ' + rec.note : '',
-      rec.lat == null ? '' : '\nKarta: https://www.openstreetmap.org/?mlat=' + rec.lat.toFixed(6) + '&mlon=' + rec.lon.toFixed(6) + '#map=18/' + rec.lat.toFixed(6) + '/' + rec.lon.toFixed(6)
+      rec.lat == null ? '' : '\nKarta: https://www.openstreetmap.org/?mlat=' + rec.lat.toFixed(6)
+        + '&mlon=' + rec.lon.toFixed(6) + '#map=18/' + rec.lat.toFixed(6) + '/' + rec.lon.toFixed(6)
     ].filter(Boolean).join('\n');
   }
 
   function share(rec) {
     var file = new File([rec.photo], 'divlje-' + rec.id + '.jpg', { type: 'image/jpeg' });
     var data = { files: [file], text: textFor(rec), title: 'Divlje — prijava' };
-    if (!navigator.share || !navigator.canShare || !navigator.canShare(data)) {
-      return Promise.resolve(false);
-    }
+    if (!navigator.share || !navigator.canShare || !navigator.canShare(data)) return Promise.resolve(false);
     return navigator.share(data).then(function () { return true; }, function () { return false; });
   }
 
   function reset() {
+    if (draft.url) URL.revokeObjectURL(draft.url);
     draft = { photo: null, url: null, fix: null, moved: 0, types: {}, size: '' };
     var el = $('shot'), img = el.querySelector('img');
     if (img) img.remove();
     el.classList.remove('has');
-    el.querySelector('.cap').hidden = false; el.querySelector('.sub').hidden = false;
+    el.querySelector('.cap').hidden = false;
+    el.querySelector('.sub').hidden = false;
     el.querySelector('svg').style.display = '';
-    $('retake').hidden = true;
+    $('stamp').hidden = true;
     $('note').value = '';
-    [].forEach.call($('types').children, function (c) { c.setAttribute('aria-pressed', 'false'); c.style.borderColor = 'var(--line)'; c.style.background = 'var(--surface)'; });
-    [].forEach.call($('sizes').children, function (c) { c.setAttribute('aria-pressed', 'false'); c.style.borderColor = 'var(--line)'; c.style.background = 'var(--surface)'; });
+    $('tapme').textContent = 'Dodirni snimku gdje otpad stvarno leži';
+    [].forEach.call($('types').children, clearChip);
+    [].forEach.call($('sizes').children, clearChip);
     if (dot && map) { map.removeLayer(dot); dot = null; }
     if (ring && map) { map.removeLayer(ring); ring = null; }
-    paintFix(); check();
+    paint(); check();
+  }
+  function clearChip(c) {
+    c.setAttribute('aria-pressed', 'false');
+    c.style.borderColor = 'var(--line)'; c.style.background = 'var(--surface)'; c.style.color = 'var(--ink-3)';
   }
 
   /* ---------- list -------------------------------------------------------- */
@@ -451,35 +526,39 @@
     return new Date(ts).toLocaleDateString('hr-HR');
   }
   function refresh() {
+    if (!db) return Promise.resolve();
     return all().then(function (list) {
-      rows = list;
       $('cnt').textContent = list.length ? String(list.length) : '';
       var box = $('rows'); box.innerHTML = '';
+      var queued = list.filter(function (r) { return r.status !== 'poslano'; }).length;
+      $('sum').hidden = !list.length;
       $('listFoot').hidden = !list.length;
+      $('sumN').textContent = String(list.length);
+      $('sumT').innerHTML = (list.length === 1 ? 'prijava' : 'prijave') + ' na ovom telefonu<br>'
+        + (queued ? '<span style="color:var(--warn)">' + queued + ' čeka slanje — dodirni red</span>' : 'sve su poslane');
       if (!list.length) {
-        box.innerHTML = '<div class="empty">Nema prijava na ovom telefonu.<br>Slikaj otpad i prijava će se pojaviti ovdje.</div>';
+        box.innerHTML = '<div class="empty">Nema prijava na ovom telefonu.<br>Slikaj otpad i pojavit će se ovdje.</div>';
         return;
       }
       list.forEach(function (r) {
-        var el = document.createElement('button');
-        el.className = 'row'; el.type = 'button';
         var t = TYPES.filter(function (x) { return r.types.indexOf(x[0]) >= 0; });
         var sent = r.status === 'poslano';
+        var el = document.createElement('button');
+        el.className = 'row'; el.type = 'button';
         el.innerHTML =
+          '<span class="edge" style="background:' + (t[0] ? t[0][2] : 'var(--line-hi)') + '"></span>' +
           '<img alt="">' +
           '<span class="row-main">' +
-            '<span class="row-t">' + t.map(function (x) { return '<span class="dot" style="width:9px;height:9px;border-radius:50%;background:' + x[2] + '"></span>'; }).join('') +
-              (t.map(function (x) { return x[1]; }).join(', ') || 'Bez vrste') + '</span>' +
-            '<span class="row-s">' + (r.lat == null ? 'bez koordinata' : r.lat.toFixed(5) + ', ' + r.lon.toFixed(5)) +
-              ' · ' + (r.src === 'ručno' ? 'ručno' : '± ' + (r.acc == null ? '?' : r.acc.toFixed(0)) + ' m') + ' · ' + ago(r.ts) + '</span>' +
+            '<span class="row-t">' + (t.map(function (x) { return x[1]; }).join(', ') || 'Bez vrste') + '</span>' +
+            '<span class="row-s">' + (r.lat == null ? 'bez koordinata' : r.lat.toFixed(5) + ', ' + r.lon.toFixed(5)) + '</span>' +
+            '<span class="row-s">' + (r.src === 'ručno' ? 'ucrtano rukom' : '± ' + (r.acc == null ? '?' : r.acc.toFixed(0)) + ' m')
+              + ' · ' + ago(r.ts) + '</span>' +
           '</span>' +
-          '<span class="badge" style="color:' + (sent ? 'var(--good)' : 'var(--warn)') + ';border:1px solid ' +
-            (sent ? 'rgba(63,201,140,.4)' : 'rgba(232,163,60,.4)') + '">' + (sent ? 'poslano' : 'u redu') + '</span>';
+          '<span class="pill" style="color:' + (sent ? 'var(--good)' : 'var(--warn)') + ';background:'
+            + (sent ? 'rgba(63,201,140,.13)' : 'rgba(232,163,60,.13)') + '">' + (sent ? 'POSLANO' : 'U REDU') + '</span>';
         el.querySelector('img').src = URL.createObjectURL(r.photo);
         el.addEventListener('click', function () {
-          share(r).then(function (sent2) {
-            if (sent2 && r.status !== 'poslano') { r.status = 'poslano'; put(r).then(refresh); }
-          });
+          share(r).then(function (ok) { if (ok && !sent) { r.status = 'poslano'; put(r).then(refresh); } });
         });
         box.appendChild(el);
       });
@@ -487,17 +566,16 @@
   }
 
   /* ---------- tabs -------------------------------------------------------- */
-  function showList() { tab(false); }
   function tab(isNew) {
     $('viewNew').hidden = !isNew; $('viewList').hidden = isNew;
     $('tabNew').setAttribute('aria-selected', String(isNew));
     $('tabList').setAttribute('aria-selected', String(!isNew));
-    $('hint').hidden = !isNew; $('send').parentNode.hidden = !isNew;
+    $('foot').hidden = !isNew;
     if (isNew && map) setTimeout(function () { map.invalidateSize(); }, 60);
   }
-  $('tabNew').addEventListener('click', function () { tab(true); });
-  $('tabList').addEventListener('click', function () { tab(false); refresh(); });
-  $('clear').addEventListener('click', reset);
+  on('tabNew', 'click', function () { tab(true); });
+  on('tabList', 'click', function () { tab(false); refresh(); });
+  on('clear', 'click', reset);
 
   open().then(refresh, function () {
     $('rows').innerHTML = '<div class="empty">Spremnik nije dostupan — prijave se ne mogu čuvati na ovom pregledniku.</div>';
