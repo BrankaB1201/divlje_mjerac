@@ -80,7 +80,7 @@
 
   /* map -------------------------------------------------------------------- */
   .mapwrap { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--surface); }
-  .mapbox { position: relative; height: 178px; }
+  .mapbox { position: relative; height: 208px; }
   #map { position: absolute; inset: 0; background: var(--bg-deep); }
   .leaflet-container { font-family: var(--fb); background: var(--bg-deep); }
   .leaflet-control-attribution { background: rgba(7,10,14,.7) !important; color: var(--ink-4) !important; font-size: 8px !important; }
@@ -175,21 +175,7 @@
 
 <main id="viewNew">
   <div>
-    <div class="step" id="st1" data-done="0"><span class="n">1</span><b>Fotografija</b><span class="opt">obavezno</span></div>
-    <div class="shot" id="shot" role="button" tabindex="0" aria-label="Slikaj otpad">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.6A2 2 0 0 1 5 6.6h1.6a1 1 0 0 0 .8-.4l1-1.3a1 1 0 0 1 .8-.4h5.6a1 1 0 0 1 .8.4l1 1.3a1 1 0 0 0 .8.4H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><circle cx="12" cy="12.8" r="3.3"/></svg>
-      <span class="cap">Slikaj otpad</span>
-      <span class="sub">Položaj se hvata u trenutku okidanja — telefon ga u sliku ne upisuje.</span>
-      <div class="stamp" id="stamp" hidden>
-        <span class="stamp-t"><b id="stampCoord">—</b><span id="stampMeta">—</span></span>
-        <button class="retake" id="retake" type="button">Ponovo</button>
-      </div>
-    </div>
-    <input type="file" accept="image/*" capture="environment" id="camIn" hidden>
-  </div>
-
-  <div>
-    <div class="step" id="st2" data-done="0"><span class="n">2</span><b>Gdje leži</b><span class="opt">ispravi ako treba</span></div>
+    <div class="step" id="st1" data-done="0"><span class="n">1</span><b>Gdje leži</b><span class="opt">ispravi ako treba</span></div>
     <div class="mapwrap">
       <div class="mapbox">
         <div id="map"></div>
@@ -212,6 +198,20 @@
         </span>
       </div>
     </div>
+  </div>
+
+  <div>
+    <div class="step" id="st2" data-done="0"><span class="n">2</span><b>Fotografija</b><span class="opt">obavezno</span></div>
+    <div class="shot" id="shot" role="button" tabindex="0" aria-label="Slikaj otpad">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.6A2 2 0 0 1 5 6.6h1.6a1 1 0 0 0 .8-.4l1-1.3a1 1 0 0 1 .8-.4h5.6a1 1 0 0 1 .8.4l1 1.3a1 1 0 0 0 .8.4H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><circle cx="12" cy="12.8" r="3.3"/></svg>
+      <span class="cap">Slikaj otpad</span>
+      <span class="sub">Položaj se hvata u trenutku okidanja — telefon ga u sliku ne upisuje.</span>
+      <div class="stamp" id="stamp" hidden>
+        <span class="stamp-t"><b id="stampCoord">—</b><span id="stampMeta">—</span></span>
+        <button class="retake" id="retake" type="button">Ponovo</button>
+      </div>
+    </div>
+    <input type="file" accept="image/*" capture="environment" id="camIn" hidden>
   </div>
 
   <div>
@@ -249,9 +249,9 @@
 
 <div class="foot" id="foot">
   <div class="ready">
+    <div id="rd3"><i></i>lokacija</div>
     <div id="rd1"><i></i>slika</div>
     <div id="rd2"><i></i>vrsta</div>
-    <div id="rd3"><i></i>lokacija</div>
   </div>
   <div class="bar">
     <button class="primary" id="send" disabled>
@@ -512,7 +512,7 @@
   function check() {
     var keys = Object.keys(draft.types);
     var hasFix = !!(draft.fix || live);
-    step('st1', !!draft.photo); step('st2', hasFix); step('st3', keys.length);
+    step('st1', hasFix); step('st2', !!draft.photo); step('st3', keys.length);
     step('st4', !!draft.size); step('st5', !!$('note').value.trim());
     $('rd1').setAttribute('data-on', draft.photo ? '1' : '0');
     $('rd2').setAttribute('data-on', keys.length ? '1' : '0');
