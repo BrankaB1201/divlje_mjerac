@@ -1,0 +1,489 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B0F14">
+<title>Test — lokacija, slika, poruka</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0B0F14; --bg-deep: #070A0E;
+    --surface: #0F161D; --surface-hi: #141D26;
+    --line: #1B242E; --line-hi: #2E3A45;
+    --ink: #E8EDF2; --ink-2: #A9B6C2; --ink-3: #75838F; --ink-4: #5E6D7A;
+    --accent: #FFB020; --good: #3FC98C; --warn: #E8A33C; --bad: #E86056;
+    --fh: 'Space Grotesk', system-ui, sans-serif;
+    --fb: 'IBM Plex Sans', system-ui, sans-serif;
+    --pad: max(14px, env(safe-area-inset-left));
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink); font-family: var(--fb);
+    -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+    height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+    padding-top: env(safe-area-inset-top);
+  }
+
+  header { display: flex; align-items: center; gap: 10px; padding: 12px var(--pad) 10px; flex: 0 0 auto; }
+  .who { flex-grow: 1; min-width: 0; }
+  .who b { display: block; font: 600 13.5px var(--fh); letter-spacing: .03em; }
+  .who span { display: block; font: 400 10.5px var(--fb); color: var(--ink-4); margin-top: 2px; }
+  .gps { display: inline-flex; align-items: center; gap: 6px; height: 27px; padding: 0 11px; border-radius: 14px;
+         border: 1px solid var(--line-hi); font: 600 11px var(--fh); color: var(--ink-2);
+         white-space: nowrap; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .gps i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-4); flex-shrink: 0; }
+
+  main { flex: 1 1 auto; overflow-y: auto; padding: 0 var(--pad) 12px;
+         display: flex; flex-direction: column; gap: 18px; }
+  main > * { flex-shrink: 0; min-width: 0; }
+
+  .step { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
+  .step .n { width: 19px; height: 19px; border-radius: 50%; flex-shrink: 0;
+             border: 1px solid var(--line-hi); color: var(--ink-3);
+             font: 700 10px var(--fh); display: flex; align-items: center; justify-content: center; }
+  .step b { font: 600 12px var(--fh); color: var(--ink-2); letter-spacing: .02em; }
+  .step .opt { font: 400 10.5px var(--fb); color: var(--ink-4); margin-left: auto; }
+  .step[data-done="1"] .n { background: var(--good); border-color: var(--good); color: var(--bg-deep); }
+  .step[data-done="1"] b { color: var(--ink); }
+
+  /* map */
+  .mapwrap { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--surface); }
+  .mapbox { position: relative; height: 208px; }
+  #map { position: absolute; inset: 0; background: var(--bg-deep); }
+  .leaflet-container { font-family: var(--fb); background: var(--bg-deep); }
+  .leaflet-control-attribution { background: rgba(7,10,14,.7) !important; color: var(--ink-4) !important; font-size: 8px !important; }
+  .leaflet-control-scale-line { background: rgba(7,10,14,.7); border-color: var(--ink-2); color: var(--ink); font: 500 9.5px var(--fb); }
+  .layers { position: absolute; left: 9px; top: 9px; z-index: 500; display: flex; gap: 4px; }
+  .lay { height: 26px; padding: 0 9px; border-radius: 9px; border: 1px solid var(--line-hi);
+         background: rgba(7,10,14,.84); color: var(--ink-3); font: 600 10px var(--fh); letter-spacing: .04em; }
+  .lay[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg-deep); }
+  .badge { position: absolute; right: 9px; top: 9px; z-index: 500; height: 26px; padding: 0 11px; border-radius: 13px;
+           font: 700 10px var(--fh); letter-spacing: .1em; display: inline-flex; align-items: center;
+           background: rgba(7,10,14,.86); }
+  #recenter { position: absolute; right: 9px; bottom: 9px; z-index: 500; height: 34px; padding: 0 12px;
+              border-radius: 11px; border: 1px solid var(--line-hi); background: rgba(7,10,14,.88);
+              color: var(--ink); font: 600 11.5px var(--fh); display: flex; align-items: center; gap: 6px; }
+  .tapme { position: absolute; left: 9px; bottom: 9px; z-index: 500; max-width: 62%; padding: 7px 10px;
+           border-radius: 10px; background: rgba(7,10,14,.86); border: 1px solid var(--line-hi);
+           font: 400 10.5px var(--fb); color: var(--ink-3); line-height: 1.4; }
+  .locbar { display: flex; align-items: center; gap: 10px; padding: 11px 13px; border-top: 1px solid var(--line); }
+  .locbar b { font: 600 12.5px var(--fh); font-variant-numeric: tabular-nums; }
+  .locbar span { display: block; font: 400 10.5px var(--fb); color: var(--ink-3); margin-top: 2px; }
+
+  /* photo */
+  .shot { position: relative; width: 100%; aspect-ratio: 4 / 3; min-height: 200px; border-radius: 18px;
+          overflow: hidden; cursor: pointer; display: flex; flex-direction: column;
+          align-items: center; justify-content: center; gap: 10px; padding: 0;
+          border: 1.5px dashed color-mix(in srgb, var(--accent) 42%, transparent);
+          background: radial-gradient(120% 90% at 50% 8%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%), var(--bg-deep);
+          color: var(--accent); }
+  .shot.has { border: 1px solid var(--line-hi); background: var(--bg-deep); }
+  .shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .shot .cap { font: 700 15px var(--fh); letter-spacing: .02em; }
+  .shot .sub { font: 400 11.5px var(--fb); color: var(--ink-3); max-width: 76%; text-align: center; line-height: 1.5; }
+  .stamp { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 13px 11px;
+           background: linear-gradient(0deg, rgba(7,10,14,.94), transparent);
+           display: flex; align-items: flex-end; gap: 10px; }
+  .stamp-t { flex-grow: 1; min-width: 0; }
+  .stamp-t b { display: block; font: 600 12.5px var(--fh); font-variant-numeric: tabular-nums; }
+  .stamp-t span { display: block; font: 400 10.5px var(--fb); color: var(--ink-3); margin-top: 2px; }
+  .retake { flex-shrink: 0; height: 34px; padding: 0 13px; border-radius: 11px; border: 1px solid var(--line-hi);
+            background: rgba(7,10,14,.9); color: var(--ink); font: 600 11.5px var(--fh); }
+
+  textarea { width: 100%; height: 82px; background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+             border-radius: 14px; padding: 12px 13px; font: 400 13px var(--fb); line-height: 1.5; resize: none; }
+  textarea::placeholder { color: var(--ink-4); }
+
+  /* what will actually be sent */
+  .peek { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); overflow: hidden; }
+  .peek-h { display: flex; align-items: center; gap: 8px; padding: 10px 13px; border-bottom: 1px solid var(--line);
+            font: 600 11px var(--fh); color: var(--ink-3); letter-spacing: .06em; }
+  .peek-h button { margin-left: auto; height: 27px; padding: 0 11px; font-size: 11px; }
+  .peek pre { margin: 0; padding: 12px 13px; font: 400 11px ui-monospace, SFMono-Regular, Menlo, monospace;
+              color: var(--ink-2); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+
+  .foot { flex: 0 0 auto; border-top: 1px solid var(--line); background: var(--bg);
+          padding: 9px var(--pad) max(10px, env(safe-area-inset-bottom)); }
+  .ready { display: flex; gap: 14px; justify-content: center; padding-bottom: 9px; }
+  .ready div { display: flex; align-items: center; gap: 6px; font: 500 10.5px var(--fb); color: var(--ink-4); }
+  .ready i { width: 7px; height: 7px; border-radius: 50%; background: var(--line-hi); }
+  .ready div[data-on="1"] { color: var(--ink-2); }
+  .ready div[data-on="1"] i { background: var(--good); }
+  .flash { text-align: center; font: 500 11px var(--fb); padding-bottom: 9px; }
+  .bar { display: flex; gap: 8px; }
+  button { font-family: var(--fh); cursor: pointer; border-radius: 13px; border: 1px solid var(--line-hi);
+           background: transparent; color: var(--ink-2); font-size: 12.5px; font-weight: 500; }
+  .primary { flex: 1 1 auto; height: 54px; border: 0; background: var(--accent); color: var(--bg-deep);
+             font-weight: 700; font-size: 14px; letter-spacing: .05em;
+             display: flex; align-items: center; justify-content: center; gap: 9px; }
+  .primary:disabled { background: #161F28; color: var(--ink-4); cursor: not-allowed; }
+  .ghost { flex: 0 0 auto; height: 54px; padding: 0 16px; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+</style>
+
+<header>
+  <span class="who"><b>Lokacija, slika, poruka</b><span>test — ništa se ne sprema ni ne šalje samo od sebe</span></span>
+  <span class="gps"><i id="gpsDot"></i><span id="gpsTxt">tražim…</span></span>
+</header>
+
+<main>
+  <div>
+    <div class="step" id="st1" data-done="0"><span class="n">1</span><b>Gdje si</b><span class="opt">ispravi ako treba</span></div>
+    <div class="mapwrap">
+      <div class="mapbox">
+        <div id="map"></div>
+        <span class="layers">
+          <button class="lay" id="laySat" aria-pressed="true" type="button">SATELIT</button>
+          <button class="lay" id="layDof" aria-pressed="false" type="button">DOF</button>
+          <button class="lay" id="layMap" aria-pressed="false" type="button">KARTA</button>
+        </span>
+        <span class="badge" id="locBadge" style="color:var(--ink-3);border:1px solid var(--line-hi)">ČEKAM</span>
+        <span class="tapme" id="tapme">Dodirni kartu da ručno pomakneš točku</span>
+        <button id="recenter" type="button" hidden>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.4"/><path d="M12 2v3.4M12 18.6V22M22 12h-3.4M5.4 12H2"/></svg>
+        Centriraj
+        </button>
+      </div>
+      <div class="locbar">
+        <span style="flex-grow:1;min-width:0">
+          <b id="locCoord">—</b>
+          <span id="locMeta">čekam položaj</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="step" id="st2" data-done="0"><span class="n">2</span><b>Slika</b><span class="opt">neobavezno</span></div>
+    <div class="shot" id="shot" role="button" tabindex="0" aria-label="Slikaj">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.6A2 2 0 0 1 5 6.6h1.6a1 1 0 0 0 .8-.4l1-1.3a1 1 0 0 1 .8-.4h5.6a1 1 0 0 1 .8.4l1 1.3a1 1 0 0 0 .8.4H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><circle cx="12" cy="12.8" r="3.3"/></svg>
+      <span class="cap">Slikaj</span>
+      <span class="sub">Položaj se zapisuje u trenutku okidanja — telefon ga u sliku ne upisuje.</span>
+      <div class="stamp" id="stamp" hidden>
+        <span class="stamp-t"><b id="stampCoord">—</b><span id="stampMeta">—</span></span>
+        <button class="retake" id="retake" type="button">Ponovo</button>
+      </div>
+    </div>
+    <input type="file" accept="image/*" capture="environment" id="camIn" hidden>
+  </div>
+
+  <div>
+    <div class="step" id="st3" data-done="0"><span class="n">3</span><b>Poruka</b><span class="opt">neobavezno</span></div>
+    <textarea id="msg" placeholder="Napiši što želiš poslati…"></textarea>
+  </div>
+
+  <div class="peek">
+    <div class="peek-h">ŠALJE SE OVO<button id="copy" type="button">Kopiraj</button></div>
+    <pre id="peekTxt">—</pre>
+  </div>
+</main>
+
+<div class="foot">
+  <div class="ready">
+    <div id="rd1"><i></i>lokacija</div>
+    <div id="rd2"><i></i>slika</div>
+    <div id="rd3"><i></i>poruka</div>
+  </div>
+  <div class="flash" id="flash" hidden></div>
+  <div class="bar">
+    <button class="primary" id="send" disabled>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2.5 11 13M21.5 2.5l-6.6 19-3.9-8.5L2.5 9.1Z"/></svg>
+      POŠALJI
+    </button>
+    <button class="ghost" id="clear" type="button">Očisti</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function on(id, ev, fn) { var el = $(id); if (el) el.addEventListener(ev, fn); return !!el; }
+  var R = 6371008.8, rad = function (d) { return d * Math.PI / 180; };
+  function metres(a, b, c, d) {
+    var p1 = rad(a), p2 = rad(c), dp = rad(c - a), dl = rad(d - b);
+    var h = Math.sin(dp / 2) * Math.sin(dp / 2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) * Math.sin(dl / 2);
+    return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  }
+
+  var live = null;                       // latest reading from the receiver
+  var draft = { fix: null, moved: 0, photo: null, url: null };
+  var map = null, dot = null, ring = null, satLayer = null, osmLayer = null;
+
+  /* ---------- map --------------------------------------------------------- */
+  var DOF_TRY = [
+    ['https://geoportal.dgu.hr/services/inspire/orthophoto_2022/wms', 'OI.OrthoimageCoverage'],
+    ['https://geoportal.dgu.hr/services/inspire/orthophoto_2021/wms', 'OI.OrthoimageCoverage'],
+    ['https://geoportal.dgu.hr/services/inspire/orthophoto_2017/wms', 'OI.OrthoimageCoverage'],
+    ['https://geoportal.dgu.hr/services/dof/wms', 'DOF'],
+    ['https://geoportal.dgu.hr/services/dof/wms', 'DOF5_2011']
+  ];
+  var dofIdx = 0, dofLayer = null;
+
+  function buildDof() {
+    var c = DOF_TRY[dofIdx], errs = 0, ok = false;
+    var l = L.tileLayer.wms(c[0], {
+      layers: c[1], format: 'image/jpeg', transparent: false, version: '1.3.0',
+      maxZoom: 21, attribution: 'DGU · DOF'
+    });
+    l.on('tileload', function () { ok = true; });
+    l.on('tileerror', function () {
+      errs += 1;
+      if (ok || errs < 4) return;
+      errs = 0;
+      if (dofIdx < DOF_TRY.length - 1) {
+        dofIdx += 1;
+        if (map.hasLayer(l)) { map.removeLayer(l); dofLayer = buildDof(); dofLayer.addTo(map); }
+        else { dofLayer = null; }
+      } else if (map.hasLayer(l)) {
+        map.removeLayer(l); pickLayer('sat');
+        $('tapme').textContent = 'Državni ortofoto se ne učitava — vraćam satelit.';
+      }
+    });
+    return l;
+  }
+
+  var follow = true, prog = false;       // stop fighting the fingers once she moves the map herself
+  function setViewSafe(ll, z) { prog = true; map.setView(ll, z, { animate: false }); prog = false; }
+  function loose() { follow = false; $('recenter').hidden = false; }
+
+  function initMap() {
+    if (map) return;
+    if (typeof L === 'undefined') {
+      $('map').innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;padding:0 22px;'
+        + 'text-align:center;font:400 11.5px var(--fb);color:var(--ink-3);line-height:1.5">Karta se nije učitala. '
+        + 'Koordinate se svejedno bilježe, samo se točka ne može ispraviti rukom.</div>';
+      $('tapme').hidden = true;
+      return;
+    }
+    map = L.map('map', { zoomControl: false, attributionControl: true, maxZoom: 21 }).setView([43.7350, 15.8952], 15);
+    satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 21, maxNativeZoom: 18, attribution: 'Esri' }).addTo(map);
+    osmLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { maxZoom: 21, maxNativeZoom: 19, attribution: '&copy; OpenStreetMap' });
+    L.control.scale({ metric: true, imperial: false }).addTo(map);
+    map.on('dragstart', loose);
+    map.on('zoomstart', function () { if (!prog) loose(); });
+    map.on('click', function (e) {
+      var base = draft.fix || live;
+      if (!base) return;
+      if (!draft.fix) draft.fix = { lat0: base.lat, lon0: base.lon, acc: base.acc, age: base.age };
+      draft.moved = metres(draft.fix.lat0, draft.fix.lon0, e.latlng.lat, e.latlng.lng);
+      draft.fix.lat = e.latlng.lat; draft.fix.lon = e.latlng.lng; draft.fix.src = 'ručno';
+      $('tapme').textContent = 'Pomaknuto ' + Math.round(draft.moved) + ' m. Dodirni opet da ispraviš.';
+      paint();
+    });
+  }
+
+  function pickLayer(which) {
+    if (!map) return;
+    [satLayer, osmLayer, dofLayer].forEach(function (l) { if (l && map.hasLayer(l)) map.removeLayer(l); });
+    if (which === 'dof') { if (!dofLayer) dofLayer = buildDof(); dofLayer.addTo(map); }
+    else if (which === 'osm') osmLayer.addTo(map);
+    else satLayer.addTo(map);
+    $('laySat').setAttribute('aria-pressed', which === 'sat' ? 'true' : 'false');
+    $('layDof').setAttribute('aria-pressed', which === 'dof' ? 'true' : 'false');
+    $('layMap').setAttribute('aria-pressed', which === 'osm' ? 'true' : 'false');
+  }
+  on('laySat', 'click', function () { pickLayer('sat'); });
+  on('layDof', 'click', function () { pickLayer('dof'); });
+  on('layMap', 'click', function () { pickLayer('osm'); });
+  on('recenter', 'click', function () {
+    var f = draft.fix || live;
+    if (!f || !map) return;
+    follow = true; $('recenter').hidden = true;
+    setViewSafe([f.lat, f.lon], Math.max(map.getZoom(), 18));
+  });
+
+  /* ---------- painting ---------------------------------------------------- */
+  function paint() {
+    var f = draft.fix || live;
+    if (!f) { check(); return; }
+    var manual = f.src === 'ručno';
+    $('locCoord').textContent = f.lat.toFixed(6) + ', ' + f.lon.toFixed(6);
+    var bits = [manual ? 'ucrtano rukom · pomak ' + Math.round(draft.moved) + ' m' : 'GNSS ± ' + f.acc.toFixed(1) + ' m'];
+    if (!manual && f.age != null) bits.push('očitanje staro ' + Math.round(f.age / 1000) + ' s');
+    $('locMeta').textContent = bits.join(' · ');
+
+    var good = manual || f.acc <= 15;
+    var b = $('locBadge');
+    b.textContent = manual ? 'RUČNO' : (good ? 'DOBRO' : 'SLABO');
+    b.style.color = good ? 'var(--good)' : 'var(--warn)';
+    b.style.border = '1px solid ' + (good ? 'rgba(63,201,140,.45)' : 'rgba(232,163,60,.45)');
+
+    if (map) {
+      if (!dot) dot = L.circleMarker([f.lat, f.lon], { radius: 6, color: '#0B0F14', weight: 2, fillColor: '#FFB020', fillOpacity: 1 }).addTo(map);
+      else dot.setLatLng([f.lat, f.lon]);
+      if (!ring) ring = L.circle([f.lat, f.lon], { radius: f.acc, color: '#FFB020', weight: 1.4, fillColor: '#FFB020', fillOpacity: .12 }).addTo(map);
+      else ring.setLatLng([f.lat, f.lon]).setRadius(manual ? 3 : f.acc);
+      if (follow) setViewSafe([f.lat, f.lon], f.acc > 30 ? 17 : 18);
+    }
+    if (draft.photo && draft.fix) {
+      $('stampCoord').textContent = f.lat.toFixed(5) + ', ' + f.lon.toFixed(5);
+      $('stampMeta').textContent = (manual ? 'ucrtano rukom' : '± ' + f.acc.toFixed(0) + ' m') +
+        ' · ' + new Date().toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' });
+    }
+    check();
+  }
+
+  /* ---------- the receiver ------------------------------------------------ */
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(function (p) {
+      var c = p.coords;
+      live = { lat: c.latitude, lon: c.longitude, acc: c.accuracy, src: 'gnss',
+               age: p.timestamp ? Math.max(0, Date.now() - p.timestamp) : null };
+      $('gpsDot').style.background = c.accuracy <= 15 ? 'var(--good)' : 'var(--warn)';
+      $('gpsTxt').textContent = '± ' + c.accuracy.toFixed(0) + ' m';
+      if (!draft.fix) { initMap(); paint(); }
+    }, function (e) {
+      $('gpsTxt').textContent = e.code === 1 ? 'odbijeno' : 'nema signala';
+      $('gpsDot').style.background = 'var(--bad)';
+      $('locMeta').textContent = e.code === 1
+        ? 'lokacija nije dopuštena za ovu stranicu'
+        : 'nema položaja — poruka može ići i bez njega';
+      check();
+    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
+  } else {
+    $('gpsTxt').textContent = 'nema';
+    $('locMeta').textContent = 'ovaj preglednik ne daje lokaciju';
+  }
+
+  /* ---------- photo ------------------------------------------------------- */
+  on('shot', 'click', function (e) { if (!e.target.closest('#retake')) $('camIn').click(); });
+  on('shot', 'keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('camIn').click(); } });
+  on('retake', 'click', function (e) { e.stopPropagation(); $('camIn').click(); });
+
+  on('camIn', 'change', function (ev) {
+    var f = ev.target.files && ev.target.files[0];
+    if (!f) return;
+    // frozen at the shutter, because the photo will not carry one
+    draft.fix = live ? { lat: live.lat, lon: live.lon, lat0: live.lat, lon0: live.lon,
+                         acc: live.acc, age: live.age, src: 'gnss' } : null;
+    draft.moved = 0;
+    shrink(f).then(function (blob) {
+      draft.photo = blob;
+      if (draft.url) URL.revokeObjectURL(draft.url);
+      draft.url = URL.createObjectURL(blob);
+      var el = $('shot');
+      el.classList.add('has');
+      var img = el.querySelector('img');
+      if (!img) { img = document.createElement('img'); img.alt = ''; el.insertBefore(img, el.firstChild); }
+      img.src = draft.url;
+      el.querySelector('.cap').hidden = true;
+      el.querySelector('.sub').hidden = true;
+      el.querySelector('svg').style.display = 'none';
+      $('stamp').hidden = false;
+      initMap(); paint();
+    });
+  });
+
+  function shrink(file) {
+    return new Promise(function (res) {
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function () {
+        var k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+        var c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        c.toBlob(function (b) { URL.revokeObjectURL(url); res(b || file); }, 'image/jpeg', 0.82);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); res(file); };
+      img.src = url;
+    });
+  }
+
+  on('msg', 'input', check);
+
+  /* ---------- what actually goes out -------------------------------------- */
+  function textNow() {
+    var f = draft.fix || live, note = $('msg').value.trim(), out = [];
+    if (note) out.push(note, '');
+    if (f) {
+      var manual = f.src === 'ručno';
+      out.push('Lokacija: ' + f.lat.toFixed(6) + ', ' + f.lon.toFixed(6));
+      out.push('Točnost: ' + (manual
+        ? 'ucrtano rukom, pomak ' + Math.round(draft.moved) + ' m'
+        : '± ' + f.acc.toFixed(1) + ' m' + (f.age != null ? ', očitanje staro ' + Math.round(f.age / 1000) + ' s' : '')));
+      out.push('Karta: https://www.openstreetmap.org/?mlat=' + f.lat.toFixed(6)
+        + '&mlon=' + f.lon.toFixed(6) + '#map=18/' + f.lat.toFixed(6) + '/' + f.lon.toFixed(6));
+    } else {
+      out.push('Lokacija: nema');
+    }
+    out.push('Vrijeme: ' + new Date().toLocaleString('hr-HR'));
+    return out.join('\n');
+  }
+
+  function step(id, done) { $(id).setAttribute('data-done', done ? '1' : '0'); }
+  function check() {
+    var hasFix = !!(draft.fix || live), note = $('msg').value.trim();
+    step('st1', hasFix); step('st2', !!draft.photo); step('st3', !!note);
+    $('rd1').setAttribute('data-on', hasFix ? '1' : '0');
+    $('rd2').setAttribute('data-on', draft.photo ? '1' : '0');
+    $('rd3').setAttribute('data-on', note ? '1' : '0');
+    $('send').disabled = !(hasFix || draft.photo || note);
+    $('peekTxt').textContent = textNow() + (draft.photo
+      ? '\n\n[ + slika ' + (draft.photo.size / 1048576).toFixed(2) + ' MB ]'
+      : '\n\n[ bez slike ]');
+  }
+
+  function flash(msg, tone) {
+    var el = $('flash');
+    el.textContent = msg;
+    el.style.color = tone === 'bad' ? 'var(--bad)' : (tone === 'good' ? 'var(--good)' : 'var(--ink-3)');
+    el.hidden = false;
+    clearTimeout(flash.t);
+    flash.t = setTimeout(function () { el.hidden = true; }, 6000);
+  }
+
+  on('send', 'click', function () {
+    var text = textNow();
+    var data = { text: text, title: 'Test' };
+    if (draft.photo) {
+      var file = new File([draft.photo], 'slika-' + Date.now() + '.jpg', { type: 'image/jpeg' });
+      var withFile = { files: [file], text: text, title: 'Test' };
+      if (navigator.canShare && navigator.canShare(withFile)) data = withFile;
+      else flash('Ovaj preglednik ne dijeli slike — šaljem samo tekst.', 'bad');
+    }
+    if (!navigator.share) { flash('Dijeljenje ne radi ovdje — pritisni „Kopiraj” pa zalijepi u poruku.', 'bad'); return; }
+    navigator.share(data).then(
+      function () { flash('Poslano.', 'good'); },
+      function (e) { flash(e && e.name === 'AbortError' ? 'Odustala si od slanja.' : 'Slanje nije uspjelo: ' + (e && e.name), 'bad'); }
+    );
+  });
+
+  on('copy', 'click', function () {
+    var t = textNow();
+    var done = function () { flash('Tekst je kopiran.', 'good'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, function () { flash('Kopiranje nije uspjelo.', 'bad'); });
+    else {
+      var ta = document.createElement('textarea');
+      ta.value = t; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { flash('Kopiranje nije uspjelo.', 'bad'); }
+      document.body.removeChild(ta);
+    }
+  });
+
+  on('clear', 'click', function () {
+    if (draft.url) URL.revokeObjectURL(draft.url);
+    draft = { fix: null, moved: 0, photo: null, url: null };
+    var el = $('shot'), img = el.querySelector('img');
+    if (img) el.removeChild(img);
+    el.classList.remove('has');
+    el.querySelector('.cap').hidden = false;
+    el.querySelector('.sub').hidden = false;
+    el.querySelector('svg').style.display = '';
+    $('stamp').hidden = true;
+    $('msg').value = '';
+    $('camIn').value = '';
+    $('tapme').textContent = 'Dodirni kartu da ručno pomakneš točku';
+    follow = true; $('recenter').hidden = true;
+    paint();
+  });
+
+  initMap();
+  check();
+})();
+</script>

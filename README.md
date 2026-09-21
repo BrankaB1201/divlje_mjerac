@@ -1,7 +1,20 @@
 # Divlje — teren
 
-Dvije stranice. **`prijava.html`** je radna prijava otpada; **`index.html`** je
-mjerač točnosti kojim se provjerava ono na čemu prijava stoji.
+Tri stranice. **`test.html`** je gola proba — karta, slika i poruka, bez ičega
+drugog; **`prijava.html`** je radna prijava otpada; **`index.html`** je mjerač
+točnosti kojim se provjerava ono na čemu prijava stoji.
+
+## Gola proba
+
+    https://raw.githack.com/BrankaB1201/divlje_mjerac/main/test.html
+
+Bez imena, bez vrsta otpada, bez spremanja. Samo tri stvari: karta s tvojim
+položajem koji se rukom može ispraviti, jedna slika i poruka. Dolje piše
+točno što se šalje, pa se pritisne **Pošalji** i otvori se izbornik
+dijeljenja telefona (WhatsApp, Viber, e-pošta…). „Kopiraj" uzme sam tekst
+ako dijeljenje na tom uređaju ne radi.
+
+Služi da se u jednom prolazu vidi radi li ono osnovno na tvom telefonu.
 
 ## Prijava
 
